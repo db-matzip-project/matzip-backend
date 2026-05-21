@@ -109,7 +109,7 @@ CREATE INDEX IF NOT EXISTS idx_schedules_user_created ON schedules (user_id, cre
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS schedule_restaurants (
     id             BIGSERIAL PRIMARY KEY,
-    schedule_id    BIGINT NOT NULL,
+    schedule_id    BIGINT NOT NULL,결
     restaurant_id  BIGINT NOT NULL,
     visit_order    INTEGER NOT NULL,
     memo           VARCHAR(500),

@@ -15,6 +15,11 @@ This repository now includes the normalized core schema for:
 - **JWT**: 운영에서는 `JWT_SECRET` 환경변수로 `jwt.secret` 을 반드시 설정하세요 (충분히 긴 문자열).
 - 인증이 필요한 API는 헤더 `Authorization: Bearer <accessToken>` 을 붙입니다.
 
+## Swagger UI (API 검증)
+
+앱 기동 후 브라우저에서 **`http://localhost:8080/swagger-ui.html`** 을 엽니다.  
+로그인/회원가입 등으로 받은 `accessToken`을 상단 **Authorize** 에 넣으면 보호된 엔드포인트를 같은 탭에서 호출할 수 있습니다. (HTTP Bearer 형식이라 `Bearer ` 접두어는 UI가 붙입니다.)
+
 ## 인증 · 회원 · 취향 API
 
 | 메서드 | 경로 | 설명 |
