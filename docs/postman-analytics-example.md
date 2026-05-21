@@ -1,9 +1,15 @@
 # Postman request example
 
-## 1) Top restaurants from similar users
+## 0) 로그인 후 토큰 받기
+
+1. `POST http://localhost:8081/api/v1/auth/signup` 또는 `POST .../auth/login`
+2. 응답의 `accessToken` 값을 복사합니다.
+
+## 1) 입맛 비슷한 사용자 TOP 식당 (로그인 필요)
 
 - Method: `GET`
-- URL: `http://localhost:8080/api/v1/analytics/similar-users/top-restaurants?userId=1`
+- URL: `http://localhost:8081/api/v1/analytics/similar-users/top-restaurants`
+- Headers: `Authorization: Bearer <accessToken>`
 
 Expected response example:
 
@@ -28,6 +34,9 @@ Expected response example:
 
 Run SQL manually before API test:
 
-- File: `src/main/resources/db/sample-data.sql`
+- 실행 순서: `schema.sql` → `postgis.sql` → `triggers.sql` → (선택) `sample-data.sql`
+- 디렉터리 안내: `src/main/resources/db/README.md`
 
-You can execute it in pgAdmin or psql after `schema.sql` is applied.
+You can execute scripts in pgAdmin or psql.
+
+Note: 최신 도메인은 `schedules` + `schedule_restaurants` 형태입니다.

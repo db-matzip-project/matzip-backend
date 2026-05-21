@@ -9,8 +9,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.time.Instant;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -42,4 +44,15 @@ public class ScheduleRestaurant {
 
     @Column(length = 500)
     private String memo;
+
+    /** 일정에 식당이 추가된 시각(분석용). 구 행은 null 가능 → COALESCE(added_at, schedule.created_at) */
+    @Column(name = "added_at")
+    private Instant addedAt;
+
+    @PrePersist
+    void prePersistAddedAt() {
+        if (addedAt == null) {
+            addedAt = Instant.now();
+        }
+    }
 }

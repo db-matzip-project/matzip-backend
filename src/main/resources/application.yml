@@ -1,4 +1,11 @@
 spring:
+  application:
+    name: DBmatzip
+  # JPA ddl-auto 로 테이블을 관리합니다. 과제용 정규 DDL은 db/schema.sql (+ postgis.sql, triggers.sql) 수동 실행.
+  # sql.init 자동 실행은 끔 (중복·충돌 방지).
+  sql:
+    init:
+      mode: never
   datasource:
     # localhost:5432의 matzip_db 창고로 연결합니다.
     url: jdbc:postgresql://localhost:5432/matzip_db
@@ -16,8 +23,14 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         # 위치 검색: PostGIS + latitude/longitude 컬럼 (네이티브 쿼리 ST_MakePoint)
         # DB: CREATE EXTENSION IF NOT EXISTS postgis;
-        # 인덱스: src/main/resources/db/dev-postgis.sql
+        # 공간 인덱스: src/main/resources/db/postgis.sql
 
 # 카카오 개발자 콘솔의 REST API 키 (커밋 금지 — 환경변수 권장)
 kakao:
   rest-api-key: ${KAKAO_REST_API_KEY:}
+
+# JWT (운영에서는 JWT_SECRET 필수 — 최소 32바이트 이상 문자열)
+jwt:
+  secret: ${JWT_SECRET:change-me-change-me-change-me-change-me-change-me-change-me!!}
+  expiration-ms: 86400000
+

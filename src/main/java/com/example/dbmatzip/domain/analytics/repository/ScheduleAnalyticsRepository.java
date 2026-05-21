@@ -9,47 +9,91 @@ import org.springframework.data.repository.query.Param;
 
 public interface ScheduleAnalyticsRepository extends JpaRepository<Schedule, Long> {
 
-    @Query(value = """
-            WITH target_user AS (
-                SELECT u.id, u.age
-                FROM users u
-                WHERE u.id = :userId
-            ),
-            target_spicy_pref AS (
-                SELECT up.preference_id
-                FROM user_preferences up
-                JOIN preferences p ON p.id = up.preference_id
-                WHERE up.user_id = :userId
-                  AND p.code LIKE 'SPICY_%'
-            ),
-            similar_users AS (
-                SELECT u2.id AS user_id
-                FROM users u2
-                WHERE u2.id <> :userId
-                  AND (u2.age / 10) = (SELECT age / 10 FROM target_user)
-                  AND EXISTS (
-                      SELECT 1
-                      FROM user_preferences up2
-                      JOIN target_spicy_pref tsp ON tsp.preference_id = up2.preference_id
-                      WHERE up2.user_id = u2.id
-                  )
-            ),
-            recent_schedules AS (
-                SELECT s.user_id, s.restaurant_id
-                FROM schedules s
-                WHERE s.visit_date_time >= NOW() - INTERVAL '1 month'
-            )
-            SELECT
-                r.id AS restaurantId,
-                r.name AS restaurantName,
-                COUNT(*) AS scheduleCount,
-                COUNT(DISTINCT rs.user_id) AS contributorUserCount
-            FROM recent_schedules rs
-            JOIN similar_users su ON su.user_id = rs.user_id
-            JOIN restaurants r ON r.id = rs.restaurant_id
-            GROUP BY r.id, r.name
-            ORDER BY scheduleCount DESC, contributorUserCount DESC, r.id ASC
-            LIMIT 10
-            """, nativeQuery = true)
+    @Query(
+            value =
+                    """
+                    WITH target_prefs AS (
+                        SELECT preference_id FROM user_preferences WHERE user_id = :userId
+                    ),
+                    thresh AS (
+                        SELECT CASE WHEN COUNT(*) = 0 THEN NULL ELSE LEAST(3, COUNT(*)::int) END AS min_overlap
+                        FROM target_prefs
+                    ),
+                    similar_users AS (
+                        SELECT u2.id AS uid
+                        FROM users u2
+                        CROSS JOIN thresh th
+                        WHERE th.min_overlap IS NOT NULL
+                          AND u2.id <> :userId
+                          AND (
+                              SELECT COUNT(*)::int FROM user_preferences up2
+                              INNER JOIN target_prefs tp ON tp.preference_id = up2.preference_id
+                              WHERE up2.user_id = u2.id
+                          ) >= th.min_overlap
+                          AND (
+                              (SELECT age FROM users WHERE id = :userId) IS NULL
+                              OR u2.age IS NULL
+                              OR ((SELECT age FROM users WHERE id = :userId) / 10) = (u2.age / 10)
+                          )
+                    ),
+                    recent_activity AS (
+                        SELECT sr.restaurant_id, s.user_id
+                        FROM schedule_restaurants sr
+                        INNER JOIN schedules s ON s.id = sr.schedule_id
+                        WHERE COALESCE(sr.added_at, s.created_at) >= NOW() - INTERVAL '3 months'
+                    )
+                    SELECT r.id AS restaurantId,
+                           r.name AS restaurantName,
+                           COUNT(*) AS scheduleCount,
+                           COUNT(DISTINCT ra.user_id) AS contributorUserCount
+                    FROM recent_activity ra
+                    INNER JOIN similar_users su ON su.uid = ra.user_id
+                    INNER JOIN restaurants r ON r.id = ra.restaurant_id
+                    GROUP BY r.id, r.name
+                    ORDER BY COUNT(*) DESC, COUNT(DISTINCT ra.user_id) DESC, r.id ASC
+                    LIMIT 10
+                    """,
+            nativeQuery = true)
     List<SimilarTasteRestaurantStat> findTop10RestaurantsBySimilarUsers(@Param("userId") Long userId);
+
+    @Query(
+            value =
+                    """
+                    WITH target_prefs AS (
+                        SELECT preference_id FROM user_preferences WHERE user_id = :userId
+                    ),
+                    thresh AS (
+                        SELECT CASE WHEN COUNT(*) = 0 THEN NULL ELSE LEAST(3, COUNT(*)::int) END AS min_overlap
+                        FROM target_prefs
+                    ),
+                    similar_users AS (
+                        SELECT u2.id AS uid
+                        FROM users u2
+                        CROSS JOIN thresh th
+                        WHERE th.min_overlap IS NOT NULL
+                          AND u2.id <> :userId
+                          AND (
+                              SELECT COUNT(*)::int FROM user_preferences up2
+                              INNER JOIN target_prefs tp ON tp.preference_id = up2.preference_id
+                              WHERE up2.user_id = u2.id
+                          ) >= th.min_overlap
+                          AND (
+                              (SELECT age FROM users WHERE id = :userId) IS NULL
+                              OR u2.age IS NULL
+                              OR ((SELECT age FROM users WHERE id = :userId) / 10) = (u2.age / 10)
+                          )
+                    ),
+                    recent_activity AS (
+                        SELECT sr.restaurant_id, s.user_id
+                        FROM schedule_restaurants sr
+                        INNER JOIN schedules s ON s.id = sr.schedule_id
+                        WHERE COALESCE(sr.added_at, s.created_at) >= NOW() - INTERVAL '3 months'
+                    )
+                    SELECT DISTINCT ra.restaurant_id
+                    FROM recent_activity ra
+                    INNER JOIN similar_users su ON su.uid = ra.user_id
+                    LIMIT :limit
+                    """,
+            nativeQuery = true)
+    List<Long> findRecommendedRestaurantIds(@Param("userId") Long userId, @Param("limit") int limit);
 }

@@ -8,6 +8,7 @@ import com.example.dbmatzip.domain.restaurant.service.KakaoRestaurantImportServi
 import com.example.dbmatzip.domain.restaurant.service.RestaurantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,10 +26,7 @@ public class RestaurantController {
     private final KakaoRestaurantImportService kakaoRestaurantImportService;
 
     /**
-     * 목록·검색. 지도 bounds는 minLat, minLng, maxLat, maxLng 네 값 모두 전달 — PostGIS
-     * {@code ST_Contains(ST_MakeEnvelope(...), ST_MakePoint(lon,lat))}.
-     *
-     * @param sort rating_desc(기본) | rating_asc | name_asc
+     * tasteSimilar=true 이면 Authorization: Bearer JWT 필요. 입맛 비슷한 사용자들이 최근 일정에 많이 담은 식당 ID 와 bounds 교집합.
      */
     @GetMapping
     public PageResponse<RestaurantResponse> list(
@@ -40,8 +38,11 @@ public class RestaurantController {
             @RequestParam(required = false) Double maxLng,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String sort) {
-        return restaurantService.search(category, minRating, minLat, minLng, maxLat, maxLng, page, size, sort);
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false, defaultValue = "false") boolean tasteSimilar,
+            Authentication authentication) {
+        return restaurantService.search(
+                category, minRating, minLat, minLng, maxLat, maxLng, page, size, sort, tasteSimilar, authentication);
     }
 
     @GetMapping("/{id}")
@@ -49,9 +50,6 @@ public class RestaurantController {
         return restaurantService.getById(id);
     }
 
-    /**
-     * 카카오 로컬 API 키워드 검색 결과를 DB에 저장·갱신합니다. 동일 API 장소 id(api_id)는 upsert.
-     */
     @PostMapping("/import/kakao")
     public KakaoImportResponse importFromKakao(@Valid @RequestBody KakaoImportRequest request) {
         return kakaoRestaurantImportService.importFromKeyword(request);

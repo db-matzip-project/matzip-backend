@@ -1,43 +1,60 @@
-# Matzip DB — ERD (팀 기준 + 식당 테이블 확장)
+# Matzip DB — ERD (현행 정규 스키마)
 
-팀에서 그린 초안 ERD를 유지하고, **식당 목록·상세·카카오 연동·지도·향후 통계**에 필요한 컬럼을 `restaurants`에 추가한 버전입니다.
+[`schema.sql`](../src/main/resources/db/schema.sql) 과 동일한 도메인을 기준으로 합니다. 상세 서술은 **[database.md](database.md)** 를 참고하세요.
 
 ---
 
 ## 1. 관계 다이어그램 (Mermaid)
 
-다이어그램은 [GitHub / many Markdown 뷰어](https://github.blog/2022-02-14-include-diagrams-markdown-files-mermaid/)에서 렌더링됩니다.
-
 ```mermaid
 erDiagram
-    users ||--o{ plan : "creates"
-    plan ||--o{ plan_items : "contains"
-    restaurants ||--o{ plan_items : "referenced_by"
+    users ||--o{ schedules : owns
+    users ||--o{ user_preferences : selects
+    preferences ||--o{ user_preferences : tagged_by
+    schedules ||--o{ schedule_restaurants : contains
+    restaurants ||--o{ schedule_restaurants : appears_in
 
     users {
-        bigint id PK "내부 PK"
-        varchar login_id "로그인 아이디 (unique 권장)"
-        varchar password "비밀번호 해시 저장 권장"
-        varchar nickname "서비스 닉네임"
-        varchar preference_tags "선호 음식 태그"
+        bigint id PK
+        varchar login_id UK "로그인 아이디"
+        varchar password_hash "BCrypt 해시"
+        varchar name "실명"
+        varchar phone "전화"
+        varchar nickname "표시명 optional"
+        int age "optional OLAP 연령대"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    preferences {
+        bigint id PK
+        varchar code UK "SPICY_HIGH 등"
+        varchar display_name
+    }
+
+    user_preferences {
+        bigint user_id PK_FK
+        bigint preference_id PK_FK
+        int weight "기본 1"
     }
 
     restaurants {
         bigint id PK
-        varchar api_id "외부 장소 ID (unique)"
-        varchar name "상호"
-        varchar category "검색·필터용 카테고리 코드/라벨"
-        varchar address "지번/행정 주소"
-        varchar road_address "도로명 주소 (확장)"
-        varchar phone "전화번호 (확장)"
-        varchar description "업종 경로·소개 등 (확장)"
-        double latitude "위도 (공간 검색)"
-        double longitude "경도 (공간 검색)"
-        double rating "평점"
-        int review_count "리뷰·집계 수 (확장, nullable)"
+        varchar api_id UK "외부 장소 ID optional"
+        varchar name
+        varchar category
+        varchar address
+        varchar road_address
+        varchar phone
+        varchar description
+        double latitude "공간 검색"
+        double longitude "공간 검색"
+        double rating
+        int review_count
+        int schedule_add_count "트리거 동기화"
     }
 
-    plan {
+    schedules {
         bigint id PK
         bigint user_id FK
         varchar title
@@ -45,74 +62,27 @@ erDiagram
         timestamptz created_at
     }
 
-    plan_items {
+    schedule_restaurants {
         bigint id PK
-        bigint plan_id FK
+        bigint schedule_id FK
         bigint restaurant_id FK
-        int visit_order
+        int visit_order "동선 순서"
         varchar memo
+        timestamptz added_at "분석 시각 기준 optional"
     }
 ```
 
 ---
 
-## 2. 테이블 요약
+## 2. 레거시 초안과의 차이
 
-### `users` (멤버 1 담당 예정)
+팀 초안에 있던 **`plan` / `plan_items`** 명칭은 구현상 **`schedules` / `schedule_restaurants`** 로 매핑되었습니다.
 
-| 컬럼            | 설명 |
-|-----------------|------|
-| `id`            | 내부 Surrogate PK |
-| `login_id`      | 로그인 ID (초안 ERD의 “id”와 혼동 방지 위해 명시적으로 `login_id` 권장) |
-| `password`      | BCrypt 등 해시 권장 |
-| `nickname`      | 표시 이름 |
-| `preference_tags` | 취향 태그 |
-
-### `restaurants` (멤버 2 — 본 저장소 코드 기준)
-
-**팀 초안과 동일한 핵심**
-
-| 컬럼         | 설명 |
-|--------------|------|
-| `id`         | PK |
-| `api_id`     | 외부 API(카카오) 고유 ID, 중복 적재 방지 |
-| `name`       | 상호 |
-| `category`   | 필터/검색용 |
-| `address`    | 주소 |
-| `latitude` / `longitude` | 지도 마커·PostGIS `ST_MakePoint` |
-| `rating`     | 평점 |
-
-**기능 구현을 위해 추가한 확장 컬럼** (`docs` / 발표 자료에 “확장”으로 적어두면 됨)
-
-| 컬럼            | 설명 |
-|-----------------|------|
-| `road_address` | 도로명 주소 — 상세 페이지, 카카오 `road_address_name` |
-| `phone`        | 전화·문의 — 카카오 `phone` |
-| `description`  | 카카오 `category_name`(음식점＞한식＞… ) 등 부가 텍스트 |
-| `review_count` | 초기 null 가능 — 추후 리뷰·일정 담김 횟수(트리거) 등과 연동 |
-
-**공간 인덱스:** `latitude`·`longitude`로 만든 표현식 GIST  
-→ `src/main/resources/db/dev-postgis.sql`
-
-### `plan` / `plan_items` (멤버 3 담당 예정)
-
-일정·순서·메모. `plan_items.restaurant_id` → `restaurants.id`.
+평면형 **`schedules(user_id, restaurant_id, visit_date_time)`** 스키마는 [`schema_legacy_flat_schedules.sql`](../src/main/resources/db/schema_legacy_flat_schedules.sql) 에 보관되어 있습니다.
 
 ---
 
-## 3. Java 엔티티 필드 매핑 (`restaurants`)
+## 3. 공간 인덱스·마이그레이션
 
-Spring Data JPA 기본 네이밍으로 DB 컬럼은 `snake_case`로 생성됩니다.
-
-| Java (`Restaurant`) | DB 컬럼 |
-|----------------------|---------|
-| `apiId`              | `api_id` |
-| `roadAddress`        | `road_address` |
-| `reviewCount`        | `review_count` |
-| (그 외)              | camelCase → snake_case |
-
----
-
-## 4. 마이그레이션 참고
-
-`ddl-auto: update`만으로는 **삭제한 컬럼이 DB에 남을 수** 있습니다. 스키마를 맞춘 뒤 `dev-postgis.sql`의 GIST 인덱스를 다시 적용하세요.
+- GIST 인덱스 정의: [`postgis.sql`](../src/main/resources/db/postgis.sql)
+- `ddl-auto: update` 만 사용하면 **삭제된 컬럼이 DB에 남을 수 있음** → 과제 제출 전 `schema.sql` 과 실제 DB를 한 번 비교하는 것을 권장합니다.

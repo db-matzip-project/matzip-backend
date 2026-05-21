@@ -10,6 +10,7 @@ import com.example.dbmatzip.domain.schedule.dto.ScheduleCreateRequest;
 import com.example.dbmatzip.domain.schedule.dto.ScheduleDetailResponse;
 import com.example.dbmatzip.domain.schedule.dto.ScheduleDetailResponse.ScheduleItemResponse;
 import com.example.dbmatzip.domain.schedule.dto.ScheduleSummaryResponse;
+import com.example.dbmatzip.domain.schedule.dto.ScheduleUpdateRequest;
 import com.example.dbmatzip.domain.schedule.entity.Schedule;
 import com.example.dbmatzip.domain.schedule.entity.ScheduleRestaurant;
 import com.example.dbmatzip.domain.schedule.exception.ScheduleNotFoundException;
@@ -21,8 +22,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -33,29 +36,24 @@ public class ScheduleService {
     private final ScheduleRestaurantRepository scheduleRestaurantRepository;
     private final RestaurantRepository restaurantRepository;
 
-    /** 일정 생성 */
     @Transactional
-    public ScheduleDetailResponse create(ScheduleCreateRequest request) {
+    public ScheduleDetailResponse create(ScheduleCreateRequest request, Long userId) {
         Schedule schedule = new Schedule();
-        schedule.setUserId(request.userId());
+        schedule.setUserId(userId);
         schedule.setTitle(request.title());
         schedule.setTravelDate(request.travelDate());
         scheduleRepository.save(schedule);
-        return getDetail(schedule.getId(), request.userId());
+        return getDetail(schedule.getId(), userId);
     }
 
-    /** 사용자별 일정 목록(개수 포함) */
     public List<ScheduleSummaryResponse> listByUser(Long userId) {
         return scheduleRepository.findSummariesByUserId(userId);
     }
 
-    /** 일정 상세(식당·순서 포함) — 소유자 userId 검증 */
     public ScheduleDetailResponse getDetail(Long scheduleId, Long userId) {
         Schedule schedule =
                 scheduleRepository.findByIdWithItems(scheduleId).orElseThrow(() -> new ScheduleNotFoundException(scheduleId));
-        if (!schedule.getUserId().equals(userId)) {
-            throw new IllegalArgumentException("해당 일정에 접근할 수 없습니다.");
-        }
+        assertOwner(schedule, userId);
         List<ScheduleItemResponse> items = schedule.getItems().stream()
                 .sorted((a, b) -> Integer.compare(a.getVisitOrder(), b.getVisitOrder()))
                 .map(sr -> new ScheduleItemResponse(
@@ -65,7 +63,16 @@ public class ScheduleService {
                 schedule.getId(), schedule.getTitle(), schedule.getTravelDate(), schedule.getCreatedAt(), items);
     }
 
-    /** 일정 삭제 */
+    @Transactional
+    public ScheduleDetailResponse update(Long scheduleId, Long userId, ScheduleUpdateRequest request) {
+        Schedule schedule = scheduleRepository
+                .findByIdAndUserId(scheduleId, userId)
+                .orElseThrow(() -> new ScheduleNotFoundException(scheduleId));
+        schedule.setTitle(request.title());
+        schedule.setTravelDate(request.travelDate());
+        return getDetail(scheduleId, userId);
+    }
+
     @Transactional
     public void delete(Long scheduleId, Long userId) {
         Schedule schedule = scheduleRepository
@@ -74,7 +81,6 @@ public class ScheduleService {
         scheduleRepository.delete(schedule);
     }
 
-    /** 일정에 식당 추가 — 트리거로 restaurants.schedule_add_count 증가(트리거 적용 시). */
     @Transactional
     public ScheduleDetailResponse addRestaurant(Long scheduleId, Long userId, AddScheduleItemRequest request) {
         scheduleRepository
@@ -97,7 +103,6 @@ public class ScheduleService {
         return getDetail(scheduleId, userId);
     }
 
-    /** 일정에서 식당 한 줄 삭제 후 visit_order 재정렬 */
     @Transactional
     public ScheduleDetailResponse removeItem(Long scheduleId, Long userId, Long itemId) {
         scheduleRepository
@@ -111,9 +116,6 @@ public class ScheduleService {
         return getDetail(scheduleId, userId);
     }
 
-    /**
-     * 방문 순서 일괄 변경. 검증 실패 시 예외 → 전체 롤백(@Transactional).
-     */
     @Transactional
     public ScheduleDetailResponse reorderItems(Long scheduleId, Long userId, ReorderScheduleItemsRequest request) {
         scheduleRepository
@@ -146,6 +148,12 @@ public class ScheduleService {
         }
         scheduleRestaurantRepository.saveAll(rows);
         return getDetail(scheduleId, userId);
+    }
+
+    private static void assertOwner(Schedule schedule, Long userId) {
+        if (!schedule.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "해당 일정에 접근할 수 없습니다.");
+        }
     }
 
     private void normalizeVisitOrders(Long scheduleId) {

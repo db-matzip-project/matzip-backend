@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,6 +16,8 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "preferences")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class Preference {
 
     @Id
@@ -26,10 +29,4 @@ public class Preference {
 
     @Column(nullable = false, length = 100)
     private String displayName;
-
-    @Builder
-    private Preference(String code, String displayName) {
-        this.code = code;
-        this.displayName = displayName;
-    }
 }
