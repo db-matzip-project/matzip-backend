@@ -7,6 +7,15 @@ import com.example.dbmatzip.domain.member.dto.UserProfileResponse;
 import com.example.dbmatzip.domain.member.entity.User;
 import com.example.dbmatzip.domain.member.exception.DuplicateLoginIdException;
 import com.example.dbmatzip.domain.member.repository.UserRepository;
+import com.example.dbmatzip.domain.preference.entity.Preference;
+import com.example.dbmatzip.domain.preference.entity.UserPreference;
+import com.example.dbmatzip.domain.preference.repository.PreferenceRepository;
+import com.example.dbmatzip.domain.preference.repository.UserPreferenceRepository;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import com.example.dbmatzip.global.security.JwtProperties;
 import com.example.dbmatzip.global.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final PreferenceRepository preferenceRepository;
+    private final UserPreferenceRepository userPreferenceRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
@@ -36,8 +47,9 @@ public class AuthService {
                 request.phone(),
                 request.nickname(),
                 request.age());
-        userRepository.save(user);
-        return tokenResponse(user);
+        User savedUser = userRepository.save(user);
+        saveInitialPreferences(savedUser, request.preferenceIds());
+        return tokenResponse(savedUser);
     }
 
     @Transactional(readOnly = true)
@@ -53,5 +65,32 @@ public class AuthService {
     private AuthTokenResponse tokenResponse(User user) {
         String token = jwtTokenProvider.createAccessToken(user);
         return AuthTokenResponse.of(token, jwtProperties.getExpirationMs(), UserProfileResponse.from(user));
+    }
+
+    private void saveInitialPreferences(User user, List<Long> preferenceIds) {
+        if (preferenceIds == null || preferenceIds.isEmpty()) {
+            return;
+        }
+
+        Set<Long> uniquePreferenceIds = new LinkedHashSet<>(preferenceIds);
+        if (uniquePreferenceIds.size() != preferenceIds.size()) {
+            throw new IllegalArgumentException("preferenceIds 에 중복이 있습니다.");
+        }
+
+        List<Preference> preferences = preferenceRepository.findAllById(uniquePreferenceIds);
+        Map<Long, Preference> preferenceById =
+                preferences.stream().collect(Collectors.toMap(Preference::getId, preference -> preference));
+        if (preferenceById.size() != uniquePreferenceIds.size()) {
+            throw new IllegalArgumentException("존재하지 않는 취향 ID 가 포함되어 있습니다.");
+        }
+
+        List<UserPreference> rows = uniquePreferenceIds.stream()
+                .map(preferenceId -> UserPreference.builder()
+                        .user(user)
+                        .preference(preferenceById.get(preferenceId))
+                        .weight(1)
+                        .build())
+                .toList();
+        userPreferenceRepository.saveAll(rows);
     }
 }

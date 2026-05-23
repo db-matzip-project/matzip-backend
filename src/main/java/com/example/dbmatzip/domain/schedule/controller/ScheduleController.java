@@ -8,6 +8,7 @@ import com.example.dbmatzip.domain.schedule.dto.ScheduleSummaryResponse;
 import com.example.dbmatzip.domain.schedule.dto.ScheduleUpdateRequest;
 import com.example.dbmatzip.domain.schedule.service.ScheduleService;
 import com.example.dbmatzip.global.security.MemberPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,10 @@ public class ScheduleController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(
+            summary = "일정 생성",
+            description =
+                    "일정 헤더를 생성합니다. 요청에 restaurantIds를 함께 보내면 schedule_restaurants 항목이 visitOrder 1부터 함께 생성됩니다.")
     public ScheduleDetailResponse create(
             @Valid @RequestBody ScheduleCreateRequest request, @AuthenticationPrincipal MemberPrincipal principal) {
         return scheduleService.create(request, principal.getId());
@@ -65,6 +70,7 @@ public class ScheduleController {
 
     @PostMapping("/{scheduleId}/items")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "일정에 식당 추가", description = "기존 일정에 식당을 추가하고 visitOrder를 마지막 순서로 배정합니다.")
     public ScheduleDetailResponse addItem(
             @PathVariable Long scheduleId,
             @AuthenticationPrincipal MemberPrincipal principal,

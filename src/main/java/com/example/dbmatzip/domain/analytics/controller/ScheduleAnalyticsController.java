@@ -18,7 +18,7 @@ public class ScheduleAnalyticsController {
     private final ScheduleAnalyticsService scheduleAnalyticsService;
 
     /** 로그인 사용자 기준 입맛 비슷한 사용자들의 최근 일정 데이터 TOP 식당 */
-    @GetMapping("/similar-users/top-restaurants")
+    @GetMapping({"/similar-users/top-restaurants", "/similar-users/top-restaurants/me"})
     public List<TopRestaurantResponse> getTopRestaurants(@AuthenticationPrincipal MemberPrincipal principal) {
         return scheduleAnalyticsService.getTopRestaurantsBySimilarUsers(principal.getId());
     }

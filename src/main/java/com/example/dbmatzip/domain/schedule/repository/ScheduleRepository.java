@@ -33,4 +33,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     Optional<Schedule> findByIdWithItems(@Param("id") Long id);
 
     Optional<Schedule> findByIdAndUserId(Long id, Long userId);
+
+    long countByUserId(Long userId);
 }

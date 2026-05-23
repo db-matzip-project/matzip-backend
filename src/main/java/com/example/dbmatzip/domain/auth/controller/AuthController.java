@@ -4,6 +4,7 @@ import com.example.dbmatzip.domain.auth.dto.LoginRequest;
 import com.example.dbmatzip.domain.auth.dto.SignupRequest;
 import com.example.dbmatzip.domain.auth.service.AuthService;
 import com.example.dbmatzip.domain.member.dto.AuthTokenResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,9 @@ public class AuthController {
 
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(
+            summary = "회원가입",
+            description = "회원가입 후 JWT를 반환합니다. preferenceIds를 함께 보내면 user_preferences가 즉시 저장됩니다.")
     public AuthTokenResponse signup(@Valid @RequestBody SignupRequest request) {
         return authService.signup(request);
     }

@@ -16,10 +16,13 @@ import com.example.dbmatzip.domain.schedule.entity.ScheduleRestaurant;
 import com.example.dbmatzip.domain.schedule.exception.ScheduleNotFoundException;
 import com.example.dbmatzip.domain.schedule.repository.ScheduleRepository;
 import com.example.dbmatzip.domain.schedule.repository.ScheduleRestaurantRepository;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -43,6 +46,7 @@ public class ScheduleService {
         schedule.setTitle(request.title());
         schedule.setTravelDate(request.travelDate());
         scheduleRepository.save(schedule);
+        addInitialRestaurants(schedule, request.restaurantIds());
         return getDetail(schedule.getId(), userId);
     }
 
@@ -75,9 +79,8 @@ public class ScheduleService {
 
     @Transactional
     public void delete(Long scheduleId, Long userId) {
-        Schedule schedule = scheduleRepository
-                .findByIdAndUserId(scheduleId, userId)
-                .orElseThrow(() -> new ScheduleNotFoundException(scheduleId));
+        Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow(() -> new ScheduleNotFoundException(scheduleId));
+        assertOwner(schedule, userId);
         scheduleRepository.delete(schedule);
     }
 
@@ -161,6 +164,39 @@ public class ScheduleService {
                 scheduleRestaurantRepository.findBySchedule_IdOrderByVisitOrderAsc(scheduleId);
         for (int i = 0; i < rows.size(); i++) {
             rows.get(i).setVisitOrder(i + 1);
+        }
+        scheduleRestaurantRepository.saveAll(rows);
+    }
+
+    private void addInitialRestaurants(Schedule schedule, List<Long> restaurantIds) {
+        if (restaurantIds == null || restaurantIds.isEmpty()) {
+            return;
+        }
+
+        Set<Long> uniqueOrderedRestaurantIds = new LinkedHashSet<>(restaurantIds);
+        if (uniqueOrderedRestaurantIds.size() != restaurantIds.size()) {
+            throw new IllegalArgumentException("초기 식당 목록에 중복 ID가 포함되어 있습니다.");
+        }
+
+        List<Restaurant> restaurants = restaurantRepository.findAllById(uniqueOrderedRestaurantIds);
+        Map<Long, Restaurant> restaurantById = restaurants.stream()
+                .collect(Collectors.toMap(Restaurant::getId, restaurant -> restaurant));
+        if (restaurantById.size() != uniqueOrderedRestaurantIds.size()) {
+            Long missingRestaurantId = uniqueOrderedRestaurantIds.stream()
+                    .filter(id -> !restaurantById.containsKey(id))
+                    .findFirst()
+                    .orElse(null);
+            throw new RestaurantNotFoundException(missingRestaurantId);
+        }
+
+        List<ScheduleRestaurant> rows = new ArrayList<>(uniqueOrderedRestaurantIds.size());
+        int visitOrder = 1;
+        for (Long restaurantId : uniqueOrderedRestaurantIds) {
+            ScheduleRestaurant row = new ScheduleRestaurant();
+            row.setSchedule(schedule);
+            row.setRestaurant(restaurantById.get(restaurantId));
+            row.setVisitOrder(visitOrder++);
+            rows.add(row);
         }
         scheduleRestaurantRepository.saveAll(rows);
     }

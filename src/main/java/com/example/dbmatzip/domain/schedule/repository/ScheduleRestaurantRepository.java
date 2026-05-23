@@ -18,4 +18,18 @@ public interface ScheduleRestaurantRepository extends JpaRepository<ScheduleRest
     List<ScheduleRestaurant> findBySchedule_IdOrderByVisitOrderAsc(Long scheduleId);
 
     Optional<ScheduleRestaurant> findByIdAndSchedule_Id(Long itemId, Long scheduleId);
+
+    long countBySchedule_UserId(Long userId);
+
+    @Query(
+            value =
+                    """
+                    select count(*)
+                    from schedule_restaurants sr
+                    inner join schedules s on s.id = sr.schedule_id
+                    where s.user_id = :userId
+                      and coalesce(sr.added_at, s.created_at) >= now() - interval '30 day'
+                    """,
+            nativeQuery = true)
+    long countRecentAddedItemsByUserId(@Param("userId") Long userId);
 }

@@ -24,7 +24,7 @@ This repository now includes the normalized core schema for:
 
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
-| POST | `/api/v1/auth/signup` | 회원가입 (이름·아이디·비번·전화 등), 응답에 JWT 포함 |
+| POST | `/api/v1/auth/signup` | 회원가입 (이름·아이디·비번·전화 등), 응답에 JWT 포함. `preferenceIds`를 함께 보내면 `user_preferences`도 즉시 저장 |
 | POST | `/api/v1/auth/login` | 로그인 |
 | POST | `/api/v1/auth/logout` | 무상태 JWT — 클라이언트에서 토큰 폐기용 noop |
 | GET/PATCH | `/api/v1/users/me` | 내 정보 조회·수정 |
@@ -39,6 +39,25 @@ This repository now includes the normalized core schema for:
 - `GET /api/v1/schedules/{id}/route/legs` — 저장된 순서 기준 구간 거리(km).
 - `GET /api/v1/schedules/{id}/route/suggested-order` — 근사 최단 방문 순서 제안 (DB 미반영).
 - `POST /api/v1/route/optimal-order` — 식당 ID 목록만으로 순서 제안.
+
+### 일정 생성 시 매핑 데이터 적재
+
+`POST /api/v1/schedules` 요청 본문에 `restaurantIds`를 함께 보내면, 일정 헤더 생성과 동시에
+`schedule_restaurants` 매핑 행이 방문 순서(`visit_order`) 1부터 자동 저장됩니다.
+
+- `restaurantIds`는 선택 필드입니다.
+- 미전달/빈 배열이면 일정만 생성되고, 식당은 `POST /api/v1/schedules/{scheduleId}/items`로 추가합니다.
+- 중복 ID가 포함되면 `400 BAD_REQUEST`를 반환합니다.
+
+예시:
+
+```json
+{
+  "title": "주말 코스",
+  "travelDate": "2026-05-24",
+  "restaurantIds": [1, 3, 5]
+}
+```
 
 **DB 과제 제출 기준 DDL**: `src/main/resources/db/schema.sql` → 이어서 `postgis.sql`, `triggers.sql` 순 실행. 요약·인덱스·트리거 논리는 **[docs/database.md](docs/database.md)** 참고.
 
@@ -80,12 +99,22 @@ through projection interface:
 ## API endpoint
 
 - `GET /api/v1/analytics/similar-users/top-restaurants` (Bearer JWT)
+- `GET /api/v1/analytics/similar-users/top-restaurants/me` (Bearer JWT, alias)
 - Controller: `src/main/java/com/example/dbmatzip/domain/analytics/controller/ScheduleAnalyticsController.java`
+
+## Dashboard stats API
+
+- `GET /api/v1/dashboard/me` (Bearer JWT)
+- `GET /api/v1/dashboard/stats` (Bearer JWT, alias)
+- 반환값에는 내 일정 수, 일정-식당 매핑 수, 취향 수, 최근 30일 일정 아이템 수, 유사취향 TOP 추천 일부가 포함됩니다.
 
 ## Sample data & Postman
 
 - 스크립트 안내: `src/main/resources/db/README.md`
 - 데모 INSERT: `src/main/resources/db/sample-data.sql` (빈 DB에 1회 권장; 중복 실행 시 일정 행이 늘어날 수 있음)
 - Postman: `docs/postman-analytics-example.md`
+- Postman (dashboard): `docs/postman-dashboard-example.md`
+- Postman (member flow): `docs/postman-member-flow-example.md`
+- Postman collection JSON: `docs/postman-member3-collection.json` (Import 후 바로 실행 가능)
 
 DDL 적용 후 엔티티만 검증하고 싶으면 프로파일 **`dbddl`** (`application-dbddl.yml`: `ddl-auto: validate`)를 사용합니다.
