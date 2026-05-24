@@ -12,6 +12,8 @@
 
 기존 DB에 레거시 `restaurants.location`(geometry 등) 컬럼만 남아 있다면 선택적으로 [`drop-restaurants-location-column.sql`](../src/main/resources/db/drop-restaurants-location-column.sql)을 실행합니다(앱과 SSOT DDL에는 해당 컬럼 없음).
 
+기존 배포에 `users.nickname`, `users.age` 가 남아 있으면 선택적으로 [`drop-users-nickname-age-columns.sql`](../src/main/resources/db/drop-users-nickname-age-columns.sql) 을 실행합니다.
+
 레거시 평면 스키마(비교용): [`schema_legacy_flat_schedules.sql`](../src/main/resources/db/schema_legacy_flat_schedules.sql)
 
 데모 데이터: [`sample-data.sql`](../src/main/resources/db/sample-data.sql) — **빈 DB 또는 초기화 후 1회** 실행 권장.
@@ -30,7 +32,7 @@
   - `schedule_restaurants.schedule_id` → `schedules` (**CASCADE**)
   - `schedule_restaurants.restaurant_id` → `restaurants` (**RESTRICT**: 참조 중인 식당 삭제 방지)
 - **비즈니스 규칙(CHECK)**  
-  `users.age`, `restaurants.rating/lat/lon`, `schedule_restaurants.visit_order` 등 단순 도메인 오류를 DB 단에서 한 번 더 차단합니다.
+  `restaurants.rating/lat/lon`, `schedule_restaurants.visit_order` 등 단순 도메인 오류를 DB 단에서 한 번 더 차단합니다.
 
 ## 3. 인덱스 전략
 

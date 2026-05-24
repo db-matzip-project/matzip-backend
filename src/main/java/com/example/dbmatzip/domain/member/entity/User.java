@@ -11,10 +11,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 회원. 로그인 아이디·비밀번호(해시)·실명·전화번호 필수.
- * nickname·age 는 선택(표시명·추천 OLAP 연령대 매칭용).
- */
+/** 회원. 로그인 아이디·비밀번호(해시)·실명·전화번호 필수. */
 @Getter
 @Entity
 @Table(name = "users")
@@ -37,39 +34,19 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false, length = 30)
     private String phone;
 
-    @Column(length = 50)
-    private String nickname;
-
-    @Column
-    private Integer age;
-
-    public User(
-            String loginId,
-            String passwordHash,
-            String name,
-            String phone,
-            String nickname,
-            Integer age) {
+    public User(String loginId, String passwordHash, String name, String phone) {
         this.loginId = loginId;
         this.passwordHash = passwordHash;
         this.name = name;
         this.phone = phone;
-        this.nickname = nickname != null && !nickname.isBlank() ? nickname : name;
-        this.age = age;
     }
 
-    public void updateProfile(String name, String phone, String nickname, Integer age) {
+    public void updateProfile(String name, String phone) {
         if (name != null && !name.isBlank()) {
             this.name = name;
         }
         if (phone != null && !phone.isBlank()) {
             this.phone = phone;
-        }
-        if (nickname != null) {
-            this.nickname = nickname.isBlank() ? this.name : nickname;
-        }
-        if (age != null) {
-            this.age = age;
         }
     }
 

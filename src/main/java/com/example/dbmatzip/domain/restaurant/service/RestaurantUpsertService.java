@@ -55,7 +55,9 @@ public class RestaurantUpsertService {
     private static void applyKakaoDocument(KakaoPlaceDocument doc, Restaurant r) {
         r.setApiId(doc.id());
         r.setName(truncate(doc.placeName(), 200));
-        r.setCategory(normalizeCategory(doc.categoryName(), doc.categoryGroupName(), doc.categoryGroupCode()));
+        r.setCategory(
+                normalizeCategory(
+                        doc.categoryName(), doc.categoryGroupName(), doc.categoryGroupCode(), doc.placeName()));
         r.setAddress(truncate(doc.addressName(), 500));
         r.setRoadAddress(truncate(doc.roadAddressName(), 500));
         r.setPhone(truncate(doc.phone(), 40));
@@ -70,7 +72,7 @@ public class RestaurantUpsertService {
     private static void applyExternalPayload(UpsertRestaurantFromPlacePayload p, Restaurant r) {
         r.setApiId(p.apiId());
         r.setName(truncate(p.name(), 200));
-        r.setCategory(normalizeCategory(p.category(), p.categoryGroupName(), p.categoryGroupCode()));
+        r.setCategory(normalizeCategory(p.category(), p.categoryGroupName(), p.categoryGroupCode(), p.name()));
 
         String displayCategory = concatNonBlank(" > ", p.categoryGroupName(), p.category());
         r.setDescription(truncate(StringUtils.hasText(displayCategory) ? displayCategory : p.category(), 2000));
@@ -108,10 +110,16 @@ public class RestaurantUpsertService {
     }
 
     /**
-     * 카카오 {@code category_group_code} 우선 처리하고, 그다음 전체 카테고리 문자열에서 키워드로 분류합니다.
+     * 카카오 {@code category_group_code} 우선 처리하고, 그다음 장소명·카테고리 문자열에서 키워드로 분류합니다.
      * 결과는 반드시 {@link RestaurantCategory#ALLOWED_LABELS} 중 하나이며 레거시 DB의 CE7 등은 여기에서 라벨로 바뀝니다.
      */
     static String normalizeCategory(String categoryName, String categoryGroupName, String categoryGroupCode) {
+        return normalizeCategory(categoryName, categoryGroupName, categoryGroupCode, null);
+    }
+
+    /** @param placeTitle 장소 이름(카카오 {@code place_name} 등)—키워드 추론 보조 */
+    static String normalizeCategory(
+            String categoryName, String categoryGroupName, String categoryGroupCode, String placeTitle) {
         String resolvedCode = resolveEffectiveGroupCode(categoryGroupCode, categoryName);
 
         if (!resolvedCode.isEmpty()) {
@@ -122,8 +130,12 @@ public class RestaurantUpsertService {
         }
 
         String keywordSource =
-                ((categoryName == null ? "" : categoryName) + " "
-                                + (categoryGroupName == null ? "" : categoryGroupName) + " "
+                ((placeTitle == null ? "" : placeTitle)
+                                + " "
+                                + (categoryName == null ? "" : categoryName)
+                                + " "
+                                + (categoryGroupName == null ? "" : categoryGroupName)
+                                + " "
                                 + (categoryGroupCode == null ? "" : categoryGroupCode))
                         .toLowerCase(Locale.ROOT);
 
@@ -148,9 +160,9 @@ public class RestaurantUpsertService {
         return KAKAO_GROUP_CODE_ONLY.matcher(candidate).matches() ? candidate : "";
     }
 
-    /** 카카오에서 세부 {@code category_name} 이 비어 있거나 알 수 없을 때 모든 값을 허용 enum 안에 넣기 위한 기본값입니다. */
+    /** 키워드·카카오 그룹 코드로 여섯 분류에 맞출 수 없을 때 허용 라벨 {@link RestaurantCategory#ETC} 에 둡니다. */
     private static String fallbackLabel() {
-        return RestaurantCategory.KOREAN;
+        return RestaurantCategory.ETC;
     }
 
     /**
@@ -182,6 +194,20 @@ public class RestaurantUpsertService {
     }
 
     private static String inferCategoryFromKeywords(String sourceLower) {
+        // 백화점·몰 등 (카카오 카테고리 문자열 우선 처리 — 아래 한식 분식 키워드와 섞이지 않게)
+        if (containsAny(
+                sourceLower,
+                "백화점",
+                "대형매장",
+                "쇼핑몰",
+                "쇼핑센터",
+                "쇼핑가",
+                "아울렛",
+                "department store",
+                "shopping mall",
+                "shopping center")) {
+            return RestaurantCategory.ETC;
+        }
         if (containsAny(sourceLower, "디저트", "카페", "베이커리", "빵", "케이크", "도넛", "아이스크림", "커피", "tea")) {
             return RestaurantCategory.DESSERT;
         }
@@ -216,6 +242,11 @@ public class RestaurantUpsertService {
                 "피자",
                 "브런치",
                 "햄버거",
+                "패스트푸드",
+                "패스트 푸드",
+                "fast food",
+                "fastfood",
+                "burger",
                 "멕시",
                 "타코",
                 "western",

@@ -15,9 +15,11 @@ public final class RestaurantCategory {
     public static final String WESTERN = "양식";
     public static final String VEGETARIAN = "채식";
     public static final String DESSERT = "디저트";
+    /** 매핑 규칙(키워드·그룹 코드)으로 여섯 분류에 속하지 않을 때 사용 */
+    public static final String ETC = "기타";
 
     public static final List<String> ALLOWED_SEARCH_VALUES =
-            List.of(KOREAN, JAPANESE, CHINESE, WESTERN, VEGETARIAN, DESSERT);
+            List.of(KOREAN, JAPANESE, CHINESE, WESTERN, VEGETARIAN, DESSERT, ETC);
 
     /** {@link #ALLOWED_SEARCH_VALUES} 와 동일 집합 (검색 파라미터 검증 등). */
     public static final Set<String> ALLOWED_LABELS = Set.copyOf(ALLOWED_SEARCH_VALUES);

@@ -30,11 +30,6 @@ public interface ScheduleAnalyticsRepository extends JpaRepository<Schedule, Lon
                               INNER JOIN target_prefs tp ON tp.preference_id = up2.preference_id
                               WHERE up2.user_id = u2.id
                           ) >= th.min_overlap
-                          AND (
-                              (SELECT age FROM users WHERE id = :userId) IS NULL
-                              OR u2.age IS NULL
-                              OR ((SELECT age FROM users WHERE id = :userId) / 10) = (u2.age / 10)
-                          )
                     ),
                     recent_activity AS (
                         SELECT sr.restaurant_id, s.user_id
@@ -77,11 +72,6 @@ public interface ScheduleAnalyticsRepository extends JpaRepository<Schedule, Lon
                               INNER JOIN target_prefs tp ON tp.preference_id = up2.preference_id
                               WHERE up2.user_id = u2.id
                           ) >= th.min_overlap
-                          AND (
-                              (SELECT age FROM users WHERE id = :userId) IS NULL
-                              OR u2.age IS NULL
-                              OR ((SELECT age FROM users WHERE id = :userId) / 10) = (u2.age / 10)
-                          )
                     ),
                     recent_activity AS (
                         SELECT sr.restaurant_id, s.user_id

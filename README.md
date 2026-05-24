@@ -47,6 +47,7 @@ This repository now includes the normalized core schema for:
 
 - `GET /api/v1/restaurants` — 공개. `tasteSimilar=true` 이면 **로그인 필수**, 입맛 비슷한 사용자 추천 ID ∩ bounds 검색.
 - `POST /api/v1/restaurants/import/kakao` — 로그인 필요.
+- **`POST /api/v1/restaurants/from-place`** — 로그인 필요. 카카오 장소 JSON으로 `api_id` 기준 식당 upsert 후 `Restaurant` 응답 (일정 없이 DB에만 저장할 때). 본문은 일정용과 같이 `{ "place": { ... } }` 또는 장소 필드 루트 배치 모두 허용.
 - `/api/v1/schedules/**` — 일정 CRUD·항목·순서 변경은 **JWT 필수** (쿼리 `userId` 제거, 토큰의 사용자 기준).
 - **`POST .../schedules/{id}/items/from-place`** — 카카오 등에서 받은 장소 정보로 레스토 upsert 후 해당 일정에 추가 (JWT).
 - `GET /api/v1/schedules/{id}/route/legs` — 저장된 순서 기준 구간 거리(km).
@@ -55,7 +56,7 @@ This repository now includes the normalized core schema for:
 
 `GET /api/v1/restaurants` 파라미터 규칙:
 
-- `category`: `한식`, `일식`, `중식`, `양식`, `채식`, `디저트` 권장. (정확 일치 + category/description 부분 일치 검색)
+- `category`: `한식`, `일식`, `중식`, `양식`, `채식`, `디저트`, `기타` 중 하나. (정확 일치 + category/description 부분 일치 검색)
 - `minRating`: 최소 평점 필터 (`4.0`, `4.5` 등)
 - `sortBy`(권장): `rating`(평점 높은순), `rating_asc`, `reviews`(리뷰 많은순), `review_count_asc`, `distance`
 - `sort`(하위호환): 기존 파라미터도 계속 지원
@@ -145,7 +146,7 @@ This repository now includes the normalized core schema for:
 }
 ```
 
-**저장·검색 카테고리 값:** **`한식`·`일식`·`중식`·`양식`·`채식`·`디저트`** 만 허용합니다. 카카오 `from-place`/keyword import 저장 시 카테고리명·그룹코드로 자동 매핑됩니다 (`CE7` 카페 → `디저트`, `FD6`은 `category_name` 세부값으로 분류, 알 수 없으면 `한식`). `GET /api/v1/restaurants?category=` 도 위 여섯 값만 받습니다. 예전 행은 `normalize-restaurant-categories.sql` 로 맞춥니다.
+**저장·검색 카테고리 값:** **`한식`·`일식`·`중식`·`양식`·`채식`·`디저트`·`기타`** 만 허용합니다. 카카오 `from-place`/keyword import 저장 시 카테고리명·그룹코드로 자동 매핑됩니다 (`CE7` 카페 → `디저트`, `FD6`은 `category_name` 세부값으로 분류, 알 수 없으면 `기타`). `GET /api/v1/restaurants?category=` 도 위 값만 받습니다. 예전 행은 `normalize-restaurant-categories.sql` 로 맞춥니다.
 
 **DB 과제 제출 기준 DDL**: `src/main/resources/db/schema.sql` → 이어서 `postgis.sql`, `triggers.sql` 순 실행. 요약·인덱스·트리거 논리는 **[docs/database.md](docs/database.md)** 참고.
 
@@ -155,14 +156,14 @@ This repository now includes the normalized core schema for:
 
 The requirement:
 
-> "Users similar to me (for example, same spicy-food preference and same age group) and their top 10 restaurants by schedule registrations in the last month."
+> "Users similar to me (for example, same spicy-food preference) and their top 10 restaurants by schedule registrations in the last month."
 
 **구현 참고:** 저장 스키마는 `schedule_restaurants` 이며, 분석 기간은 코드 상 **최근 3개월**과 `COALESCE(added_at, schedules.created_at)` 기준입니다 (교과서 문구와 단위만 다를 수 있음).
 
 는 **`schedule_restaurants` + `schedules`** 스키마 기준 네이티브 SQL로 구현되어 있습니다.
 
 - 최근 활동: `COALESCE(schedule_restaurants.added_at, schedules.created_at)` 기준 **최근 3개월**
-- 유사 사용자: **나이대(10세 단위, 둘 다 age 가 있을 때만 매칭)** + **내가 고른 취향 태그와 겹치는 개수 ≥ min(2, 내 태그 개수)**
+- 유사 사용자: **내가 고른 취향 태그와 겹치는 개수 ≥ min(2, 내 태그 개수)**
 
 구현 위치:
 

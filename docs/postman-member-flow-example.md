@@ -19,8 +19,6 @@
   "password": "Password123!",
   "name": "홍길동",
   "phone": "01012345678",
-  "nickname": "길동이",
-  "age": 24,
   "preferenceIds": [1, 3, 5]
 }
 ```

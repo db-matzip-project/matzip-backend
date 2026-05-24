@@ -21,17 +21,12 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash   VARCHAR(120) NOT NULL,
     name            VARCHAR(100) NOT NULL,
     phone           VARCHAR(30)  NOT NULL,
-    nickname        VARCHAR(50),
-    age             INTEGER,
     created_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT LOCALTIMESTAMP,
-    updated_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT LOCALTIMESTAMP,
-    CONSTRAINT chk_users_age CHECK (age IS NULL OR (age BETWEEN 1 AND 120))
+    updated_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT LOCALTIMESTAMP
 );
 
-COMMENT ON TABLE users IS '서비스 회원. OLAP 연령대 매칭은 age 가 NULL 이 아닐 때만 사용';
+COMMENT ON TABLE users IS '서비스 회원';
 COMMENT ON COLUMN users.password_hash IS 'BCrypt 등 단방향 해시만 저장';
-
-CREATE INDEX IF NOT EXISTS idx_users_age ON users (age) WHERE age IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
 -- preferences / user_preferences : 취향 태그 정규화 (N:M)

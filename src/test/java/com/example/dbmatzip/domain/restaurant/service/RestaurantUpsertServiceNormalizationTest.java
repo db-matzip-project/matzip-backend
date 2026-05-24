@@ -36,14 +36,26 @@ class RestaurantUpsertServiceNormalizationTest {
     }
 
     @Test
-    void fd6_only_fallback_korean() {
+    void fd6_only_fallback_etc() {
         assertThat(RestaurantUpsertService.normalizeCategory("FD6", null, null))
-                .isEqualTo(RestaurantCategory.KOREAN);
+                .isEqualTo(RestaurantCategory.ETC);
     }
 
     @Test
     void unknown_non_food_group_goes_to_western_placeholder() {
         assertThat(RestaurantUpsertService.normalizeCategory(null, null, "MT1"))
+                .isEqualTo(RestaurantCategory.WESTERN);
+    }
+
+    @Test
+    void department_store_in_place_name_even_if_category_was_korean_placeholder() {
+        assertThat(RestaurantUpsertService.normalizeCategory("음식점 > 한식", "음식점", "FD6", "신세계백화점 본점"))
+                .isEqualTo(RestaurantCategory.ETC);
+    }
+
+    @Test
+    void fast_food_keyword_is_western() {
+        assertThat(RestaurantUpsertService.normalizeCategory("음식점 > 패스트푸드 > 햄버거", "", "FD6", null))
                 .isEqualTo(RestaurantCategory.WESTERN);
     }
 

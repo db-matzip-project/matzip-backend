@@ -50,6 +50,8 @@ public class SecurityConfig {
                                 .permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/**")
                                 .permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/v1/restaurants/from-place")
+                                .authenticated()
                                 .requestMatchers(HttpMethod.POST, "/api/v1/restaurants/import/kakao")
                                 .authenticated()
                                 .anyRequest()

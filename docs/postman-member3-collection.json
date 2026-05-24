@@ -57,7 +57,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"loginId\": \"{{loginId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"홍길동\",\n  \"phone\": \"01012345678\",\n  \"nickname\": \"길동이\",\n  \"age\": 24,\n  \"preferenceIds\": [1, 3, 5]\n}"
+          "raw": "{\n  \"loginId\": \"{{loginId}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"홍길동\",\n  \"phone\": \"01012345678\",\n  \"preferenceIds\": [1, 3, 5]\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/api/v1/auth/signup",

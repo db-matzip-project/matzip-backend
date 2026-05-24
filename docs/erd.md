@@ -20,8 +20,6 @@ erDiagram
         varchar password_hash "BCrypt 해시"
         varchar name "실명"
         varchar phone "전화"
-        varchar nickname "표시명 optional"
-        int age "optional OLAP 연령대"
         timestamp created_at
         timestamp updated_at
     }

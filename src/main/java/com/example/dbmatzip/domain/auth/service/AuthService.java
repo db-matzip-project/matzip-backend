@@ -44,9 +44,7 @@ public class AuthService {
                 request.loginId(),
                 passwordEncoder.encode(request.password()),
                 request.name(),
-                request.phone(),
-                request.nickname(),
-                request.age());
+                request.phone());
         User savedUser = userRepository.save(user);
         saveInitialPreferences(savedUser, request.preferenceIds());
         return tokenResponse(savedUser);

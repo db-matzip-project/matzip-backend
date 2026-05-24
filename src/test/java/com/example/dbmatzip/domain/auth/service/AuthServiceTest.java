@@ -52,15 +52,9 @@ class AuthServiceTest {
     @Test
     void signup_withPreferenceIds_savesUserPreferences() {
         SignupRequest request = new SignupRequest(
-                "member3",
-                "Password123!",
-                "홍길동",
-                "01012345678",
-                "길동이",
-                24,
-                List.of(1L, 3L));
+                "member3", "Password123!", "홍길동", "01012345678", List.of(1L, 3L));
 
-        User savedUser = new User("member3", "encoded", "홍길동", "01012345678", "길동이", 24);
+        User savedUser = new User("member3", "encoded", "홍길동", "01012345678");
         ReflectionTestUtils.setField(savedUser, "id", 101L);
         Preference p1 = Preference.builder().id(1L).code("SPICY_HIGH").displayName("아주 매운 편").build();
         Preference p3 = Preference.builder().id(3L).code("SWEET").displayName("단 맛 선호").build();
