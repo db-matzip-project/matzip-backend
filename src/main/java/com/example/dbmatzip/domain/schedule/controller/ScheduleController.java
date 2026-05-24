@@ -1,6 +1,7 @@
 package com.example.dbmatzip.domain.schedule.controller;
 
 import com.example.dbmatzip.domain.schedule.dto.AddScheduleItemRequest;
+import com.example.dbmatzip.domain.schedule.dto.AddSchedulePlaceItemRequest;
 import com.example.dbmatzip.domain.schedule.dto.ReorderScheduleItemsRequest;
 import com.example.dbmatzip.domain.schedule.dto.ScheduleCreateRequest;
 import com.example.dbmatzip.domain.schedule.dto.ScheduleDetailResponse;
@@ -76,6 +77,20 @@ public class ScheduleController {
             @AuthenticationPrincipal MemberPrincipal principal,
             @Valid @RequestBody AddScheduleItemRequest request) {
         return scheduleService.addRestaurant(scheduleId, principal.getId(), request);
+    }
+
+    @PostMapping("/{scheduleId}/items/from-place")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(
+            summary = "일정에 장소 추가(upsert)",
+            description =
+                    "프론트에서 카카오 장소 검색 등으로 받은 정보를 넘기면 api_id 기준으로 restaurants 행을 "
+                            + "없으면 생성·있으면 갱신한 뒤 일정 항목으로 연결합니다. 좌표는 latitude·longitude 에 저장합니다.")
+    public ScheduleDetailResponse addItemFromExternalPlace(
+            @PathVariable Long scheduleId,
+            @AuthenticationPrincipal MemberPrincipal principal,
+            @Valid @RequestBody AddSchedulePlaceItemRequest request) {
+        return scheduleService.addRestaurantFromExternalPlace(scheduleId, principal.getId(), request);
     }
 
     @DeleteMapping("/{scheduleId}/items/{itemId}")

@@ -48,6 +48,7 @@ This repository now includes the normalized core schema for:
 - `GET /api/v1/restaurants` — 공개. `tasteSimilar=true` 이면 **로그인 필수**, 입맛 비슷한 사용자 추천 ID ∩ bounds 검색.
 - `POST /api/v1/restaurants/import/kakao` — 로그인 필요.
 - `/api/v1/schedules/**` — 일정 CRUD·항목·순서 변경은 **JWT 필수** (쿼리 `userId` 제거, 토큰의 사용자 기준).
+- **`POST .../schedules/{id}/items/from-place`** — 카카오 등에서 받은 장소 정보로 레스토 upsert 후 해당 일정에 추가 (JWT).
 - `GET /api/v1/schedules/{id}/route/legs` — 저장된 순서 기준 구간 거리(km).
 - `GET /api/v1/schedules/{id}/route/suggested-order` — 근사 최단 방문 순서 제안 (DB 미반영).
 - `POST /api/v1/route/optimal-order` — 식당 ID 목록만으로 순서 제안.
@@ -110,7 +111,8 @@ This repository now includes the normalized core schema for:
 
 - `restaurantIds`는 선택 필드입니다.
 - 미전달/빈 배열이면 일정만 생성되고, 식당은 `POST /api/v1/schedules/{scheduleId}/items`로 추가합니다.
-- 중복 ID가 포함되면 `400 BAD_REQUEST`를 반환합니다.
+- **카카오 등 검색 결과를 바로 넣을 때**(DB에 레스토 행 없을 때): `POST /api/v1/schedules/{scheduleId}/items/from-place` — 요청으로 넘긴 `api_id`(카카오 `id`) 기준으로 `restaurants` 를 없으면 insert·있으면 update 한 뒤 일정 마지막 순서로 연결합니다. 같은 식당이 이미 그 일정에 있으면 `400`입니다.
+- `POST /api/v1/schedules` 초기 본문에 `restaurantIds`에 **중복 id** 가 있으면 `400 BAD_REQUEST`입니다.
 
 예시:
 
@@ -119,6 +121,24 @@ This repository now includes the normalized core schema for:
   "title": "주말 코스",
   "travelDate": "2026-05-24",
   "restaurantIds": [1, 3, 5]
+}
+```
+
+`items/from-place` 요청 예 (필수: `place.apiId` 또는 카카오와 동일한 JSON 키 `id`, `place.name`, `place.latitude`, `place.longitude`):
+
+```json
+{
+  "memo": "점심",
+  "place": {
+    "id": "카카오_장소_id",
+    "name": "해운대 국밥집",
+    "category": "음식점 > 한식 > 국밥",
+    "address": "부산 해운대구 …",
+    "roadAddress": "부산광역시 …",
+    "phone": "051-…",
+    "latitude": 35.1595,
+    "longitude": 129.1604
+  }
 }
 ```
 

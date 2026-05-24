@@ -4,7 +4,9 @@ import com.example.dbmatzip.domain.restaurant.dto.RestaurantResponse;
 import com.example.dbmatzip.domain.restaurant.entity.Restaurant;
 import com.example.dbmatzip.domain.restaurant.exception.RestaurantNotFoundException;
 import com.example.dbmatzip.domain.restaurant.repository.RestaurantRepository;
+import com.example.dbmatzip.domain.restaurant.service.RestaurantUpsertService;
 import com.example.dbmatzip.domain.schedule.dto.AddScheduleItemRequest;
+import com.example.dbmatzip.domain.schedule.dto.AddSchedulePlaceItemRequest;
 import com.example.dbmatzip.domain.schedule.dto.ReorderScheduleItemsRequest;
 import com.example.dbmatzip.domain.schedule.dto.ScheduleCreateRequest;
 import com.example.dbmatzip.domain.schedule.dto.ScheduleDetailResponse;
@@ -38,6 +40,7 @@ public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final ScheduleRestaurantRepository scheduleRestaurantRepository;
     private final RestaurantRepository restaurantRepository;
+    private final RestaurantUpsertService restaurantUpsertService;
 
     @Transactional
     public ScheduleDetailResponse create(ScheduleCreateRequest request, Long userId) {
@@ -110,6 +113,32 @@ public class ScheduleService {
         Restaurant restaurant = restaurantRepository
                 .findById(request.restaurantId())
                 .orElseThrow(() -> new RestaurantNotFoundException(request.restaurantId()));
+
+        ScheduleRestaurant row = new ScheduleRestaurant();
+        row.setSchedule(scheduleRepository.getReferenceById(scheduleId));
+        row.setRestaurant(restaurant);
+        row.setMemo(request.memo());
+        row.setVisitOrder(scheduleRestaurantRepository.findMaxVisitOrder(scheduleId) + 1);
+        scheduleRestaurantRepository.save(row);
+
+        return getDetail(scheduleId, userId);
+    }
+
+    /**
+     * 카카오(등) 검색 결과를 프론트에서 넘기면 api_id 로 upsert 한 뒤 일정 마지막 순서로 연결합니다.
+     */
+    @Transactional
+    public ScheduleDetailResponse addRestaurantFromExternalPlace(
+            Long scheduleId, Long userId, AddSchedulePlaceItemRequest request) {
+        scheduleRepository
+                .findByIdAndUserId(scheduleId, userId)
+                .orElseThrow(() -> new ScheduleNotFoundException(scheduleId));
+
+        Restaurant restaurant = restaurantUpsertService.upsertFromExternalPlace(request.place());
+
+        if (scheduleRestaurantRepository.existsBySchedule_IdAndRestaurant_Id(scheduleId, restaurant.getId())) {
+            throw new IllegalArgumentException("이미 일정에 담긴 식당입니다.");
+        }
 
         ScheduleRestaurant row = new ScheduleRestaurant();
         row.setSchedule(scheduleRepository.getReferenceById(scheduleId));
