@@ -22,7 +22,8 @@ public class OpenApiConfig {
                 .info(
                         new Info()
                                 .title("DBmatzip API")
-                                .description("로그인 후 응답의 accessToken을 Authorize 에 넣으면 됩니다. (Bearer 접두어 없이 토큰만)")
+                                .description(
+                                        "로그인 후 응답의 accessToken을 Authorize 에 넣으면 됩니다. Swagger UI는 Bearer 접두어를 자동으로 처리합니다.")
                                 .version("v1"))
                 .components(
                         new Components()

@@ -72,8 +72,23 @@ public class ScheduleService {
         Schedule schedule = scheduleRepository
                 .findByIdAndUserId(scheduleId, userId)
                 .orElseThrow(() -> new ScheduleNotFoundException(scheduleId));
-        schedule.setTitle(request.title());
-        schedule.setTravelDate(request.travelDate());
+
+        boolean changed = false;
+        if (request.title() != null) {
+            String trimmedTitle = request.title().trim();
+            if (trimmedTitle.isEmpty()) {
+                throw new IllegalArgumentException("title 은 비워둘 수 없습니다.");
+            }
+            schedule.setTitle(trimmedTitle);
+            changed = true;
+        }
+        if (request.travelDate() != null) {
+            schedule.setTravelDate(request.travelDate());
+            changed = true;
+        }
+        if (!changed) {
+            throw new IllegalArgumentException("수정할 필드(title, travelDate) 중 하나 이상을 보내주세요.");
+        }
         return getDetail(scheduleId, userId);
     }
 

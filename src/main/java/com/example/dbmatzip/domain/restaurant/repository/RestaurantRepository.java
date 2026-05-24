@@ -20,7 +20,18 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             value =
                     """
                     SELECT r.* FROM restaurants r
-                    WHERE (:category IS NULL OR r.category = :category)
+                    WHERE (
+                        :category IS NULL
+                        OR r.category = :category
+                        OR r.category ILIKE CONCAT('%', :category, '%')
+                        OR r.description ILIKE CONCAT('%', :category, '%')
+                        OR (:category = '한식' AND r.category ILIKE '%korean%')
+                        OR (:category = '일식' AND r.category ILIKE '%japanese%')
+                        OR (:category = '중식' AND r.category ILIKE '%chinese%')
+                        OR (:category = '양식' AND (r.category ILIKE '%western%' OR r.category ILIKE '%italian%' OR r.category ILIKE '%french%'))
+                        OR (:category = '채식' AND (r.category ILIKE '%vegetarian%' OR r.category ILIKE '%vegan%'))
+                        OR (:category = '디저트' AND (r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'))
+                    )
                     AND (:minRating IS NULL OR r.rating >= :minRating)
                     AND (
                         :minLat IS NULL
@@ -33,7 +44,18 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             countQuery =
                     """
                     SELECT count(*) FROM restaurants r
-                    WHERE (:category IS NULL OR r.category = :category)
+                    WHERE (
+                        :category IS NULL
+                        OR r.category = :category
+                        OR r.category ILIKE CONCAT('%', :category, '%')
+                        OR r.description ILIKE CONCAT('%', :category, '%')
+                        OR (:category = '한식' AND r.category ILIKE '%korean%')
+                        OR (:category = '일식' AND r.category ILIKE '%japanese%')
+                        OR (:category = '중식' AND r.category ILIKE '%chinese%')
+                        OR (:category = '양식' AND (r.category ILIKE '%western%' OR r.category ILIKE '%italian%' OR r.category ILIKE '%french%'))
+                        OR (:category = '채식' AND (r.category ILIKE '%vegetarian%' OR r.category ILIKE '%vegan%'))
+                        OR (:category = '디저트' AND (r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'))
+                    )
                     AND (:minRating IS NULL OR r.rating >= :minRating)
                     AND (
                         :minLat IS NULL
@@ -59,7 +81,18 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                     """
                     SELECT r.* FROM restaurants r
                     WHERE r.id IN (:ids)
-                    AND (:category IS NULL OR r.category = :category)
+                    AND (
+                        :category IS NULL
+                        OR r.category = :category
+                        OR r.category ILIKE CONCAT('%', :category, '%')
+                        OR r.description ILIKE CONCAT('%', :category, '%')
+                        OR (:category = '한식' AND r.category ILIKE '%korean%')
+                        OR (:category = '일식' AND r.category ILIKE '%japanese%')
+                        OR (:category = '중식' AND r.category ILIKE '%chinese%')
+                        OR (:category = '양식' AND (r.category ILIKE '%western%' OR r.category ILIKE '%italian%' OR r.category ILIKE '%french%'))
+                        OR (:category = '채식' AND (r.category ILIKE '%vegetarian%' OR r.category ILIKE '%vegan%'))
+                        OR (:category = '디저트' AND (r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'))
+                    )
                     AND (:minRating IS NULL OR r.rating >= :minRating)
                     AND (
                         :minLat IS NULL
@@ -73,7 +106,18 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                     """
                     SELECT count(*) FROM restaurants r
                     WHERE r.id IN (:ids)
-                    AND (:category IS NULL OR r.category = :category)
+                    AND (
+                        :category IS NULL
+                        OR r.category = :category
+                        OR r.category ILIKE CONCAT('%', :category, '%')
+                        OR r.description ILIKE CONCAT('%', :category, '%')
+                        OR (:category = '한식' AND r.category ILIKE '%korean%')
+                        OR (:category = '일식' AND r.category ILIKE '%japanese%')
+                        OR (:category = '중식' AND r.category ILIKE '%chinese%')
+                        OR (:category = '양식' AND (r.category ILIKE '%western%' OR r.category ILIKE '%italian%' OR r.category ILIKE '%french%'))
+                        OR (:category = '채식' AND (r.category ILIKE '%vegetarian%' OR r.category ILIKE '%vegan%'))
+                        OR (:category = '디저트' AND (r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'))
+                    )
                     AND (:minRating IS NULL OR r.rating >= :minRating)
                     AND (
                         :minLat IS NULL
@@ -92,5 +136,136 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             @Param("minLng") Double minLng,
             @Param("maxLat") Double maxLat,
             @Param("maxLng") Double maxLng,
+            Pageable pageable);
+
+    @Query(
+            value =
+                    """
+                    SELECT r.* FROM restaurants r
+                    WHERE (
+                        :category IS NULL
+                        OR r.category = :category
+                        OR r.category ILIKE CONCAT('%', :category, '%')
+                        OR r.description ILIKE CONCAT('%', :category, '%')
+                        OR (:category = '한식' AND r.category ILIKE '%korean%')
+                        OR (:category = '일식' AND r.category ILIKE '%japanese%')
+                        OR (:category = '중식' AND r.category ILIKE '%chinese%')
+                        OR (:category = '양식' AND (r.category ILIKE '%western%' OR r.category ILIKE '%italian%' OR r.category ILIKE '%french%'))
+                        OR (:category = '채식' AND (r.category ILIKE '%vegetarian%' OR r.category ILIKE '%vegan%'))
+                        OR (:category = '디저트' AND (r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'))
+                    )
+                    AND (:minRating IS NULL OR r.rating >= :minRating)
+                    AND (
+                        :minLat IS NULL
+                        OR ST_Contains(
+                            ST_MakeEnvelope(:minLng, :minLat, :maxLng, :maxLat, 4326),
+                            ST_SetSRID(ST_MakePoint(r.longitude, r.latitude), 4326)
+                        )
+                    )
+                    ORDER BY
+                        (ABS(COALESCE(r.latitude, :centerLat) - :centerLat) + ABS(COALESCE(r.longitude, :centerLng) - :centerLng)) ASC,
+                        r.id ASC
+                    """,
+            countQuery =
+                    """
+                    SELECT count(*) FROM restaurants r
+                    WHERE (
+                        :category IS NULL
+                        OR r.category = :category
+                        OR r.category ILIKE CONCAT('%', :category, '%')
+                        OR r.description ILIKE CONCAT('%', :category, '%')
+                        OR (:category = '한식' AND r.category ILIKE '%korean%')
+                        OR (:category = '일식' AND r.category ILIKE '%japanese%')
+                        OR (:category = '중식' AND r.category ILIKE '%chinese%')
+                        OR (:category = '양식' AND (r.category ILIKE '%western%' OR r.category ILIKE '%italian%' OR r.category ILIKE '%french%'))
+                        OR (:category = '채식' AND (r.category ILIKE '%vegetarian%' OR r.category ILIKE '%vegan%'))
+                        OR (:category = '디저트' AND (r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'))
+                    )
+                    AND (:minRating IS NULL OR r.rating >= :minRating)
+                    AND (
+                        :minLat IS NULL
+                        OR ST_Contains(
+                            ST_MakeEnvelope(:minLng, :minLat, :maxLng, :maxLat, 4326),
+                            ST_SetSRID(ST_MakePoint(r.longitude, r.latitude), 4326)
+                        )
+                    )
+                    """,
+            nativeQuery = true)
+    Page<Restaurant> searchOrderByDistance(
+            @Param("category") String category,
+            @Param("minRating") Double minRating,
+            @Param("minLat") Double minLat,
+            @Param("minLng") Double minLng,
+            @Param("maxLat") Double maxLat,
+            @Param("maxLng") Double maxLng,
+            @Param("centerLat") Double centerLat,
+            @Param("centerLng") Double centerLng,
+            Pageable pageable);
+
+    @Query(
+            value =
+                    """
+                    SELECT r.* FROM restaurants r
+                    WHERE r.id IN (:ids)
+                    AND (
+                        :category IS NULL
+                        OR r.category = :category
+                        OR r.category ILIKE CONCAT('%', :category, '%')
+                        OR r.description ILIKE CONCAT('%', :category, '%')
+                        OR (:category = '한식' AND r.category ILIKE '%korean%')
+                        OR (:category = '일식' AND r.category ILIKE '%japanese%')
+                        OR (:category = '중식' AND r.category ILIKE '%chinese%')
+                        OR (:category = '양식' AND (r.category ILIKE '%western%' OR r.category ILIKE '%italian%' OR r.category ILIKE '%french%'))
+                        OR (:category = '채식' AND (r.category ILIKE '%vegetarian%' OR r.category ILIKE '%vegan%'))
+                        OR (:category = '디저트' AND (r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'))
+                    )
+                    AND (:minRating IS NULL OR r.rating >= :minRating)
+                    AND (
+                        :minLat IS NULL
+                        OR ST_Contains(
+                            ST_MakeEnvelope(:minLng, :minLat, :maxLng, :maxLat, 4326),
+                            ST_SetSRID(ST_MakePoint(r.longitude, r.latitude), 4326)
+                        )
+                    )
+                    ORDER BY
+                        (ABS(COALESCE(r.latitude, :centerLat) - :centerLat) + ABS(COALESCE(r.longitude, :centerLng) - :centerLng)) ASC,
+                        r.id ASC
+                    """,
+            countQuery =
+                    """
+                    SELECT count(*) FROM restaurants r
+                    WHERE r.id IN (:ids)
+                    AND (
+                        :category IS NULL
+                        OR r.category = :category
+                        OR r.category ILIKE CONCAT('%', :category, '%')
+                        OR r.description ILIKE CONCAT('%', :category, '%')
+                        OR (:category = '한식' AND r.category ILIKE '%korean%')
+                        OR (:category = '일식' AND r.category ILIKE '%japanese%')
+                        OR (:category = '중식' AND r.category ILIKE '%chinese%')
+                        OR (:category = '양식' AND (r.category ILIKE '%western%' OR r.category ILIKE '%italian%' OR r.category ILIKE '%french%'))
+                        OR (:category = '채식' AND (r.category ILIKE '%vegetarian%' OR r.category ILIKE '%vegan%'))
+                        OR (:category = '디저트' AND (r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'))
+                    )
+                    AND (:minRating IS NULL OR r.rating >= :minRating)
+                    AND (
+                        :minLat IS NULL
+                        OR ST_Contains(
+                            ST_MakeEnvelope(:minLng, :minLat, :maxLng, :maxLat, 4326),
+                            ST_SetSRID(ST_MakePoint(r.longitude, r.latitude), 4326)
+                        )
+                    )
+                    """,
+            nativeQuery = true)
+    Page<Restaurant> searchAmongIdsOrderByDistance(
+            @Param("ids") java.util.Collection<Long> ids,
+            @Param("category") String category,
+            @Param("minRating") Double minRating,
+            @Param("minLat") Double minLat,
+            @Param("minLng") Double minLng,
+            @Param("maxLat") Double maxLat,
+            @Param("maxLng") Double maxLng,
+            @Param("centerLat") Double centerLat,
+            @Param("centerLng") Double centerLng,
             Pageable pageable);
 }

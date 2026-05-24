@@ -44,7 +44,11 @@ public class RestaurantService {
             Authentication authentication) {
 
         validateBoundingBox(minLat, minLng, maxLat, maxLng);
+        boolean sortByDistance = isDistanceSort(sort);
         Pageable pageable = PageRequest.of(page, size, resolveSort(sort));
+        if (sortByDistance) {
+            pageable = PageRequest.of(page, size);
+        }
 
         if (tasteSimilar) {
             Long userId = requireUserId(authentication);
@@ -52,13 +56,34 @@ public class RestaurantService {
             if (ids.isEmpty()) {
                 return PageResponse.of(Page.empty(pageable));
             }
-            Page<Restaurant> result =
-                    restaurantRepository.searchAmongIds(ids, category, minRating, minLat, minLng, maxLat, maxLng, pageable);
+            Page<Restaurant> result = sortByDistance
+                    ? restaurantRepository.searchAmongIdsOrderByDistance(
+                            ids,
+                            category,
+                            minRating,
+                            minLat,
+                            minLng,
+                            maxLat,
+                            maxLng,
+                            resolveCenterLat(minLat, maxLat),
+                            resolveCenterLng(minLng, maxLng),
+                            pageable)
+                    : restaurantRepository.searchAmongIds(ids, category, minRating, minLat, minLng, maxLat, maxLng, pageable);
             return PageResponse.of(result.map(RestaurantResponse::from));
         }
 
-        Page<Restaurant> result =
-                restaurantRepository.search(category, minRating, minLat, minLng, maxLat, maxLng, pageable);
+        Page<Restaurant> result = sortByDistance
+                ? restaurantRepository.searchOrderByDistance(
+                        category,
+                        minRating,
+                        minLat,
+                        minLng,
+                        maxLat,
+                        maxLng,
+                        resolveCenterLat(minLat, maxLat),
+                        resolveCenterLng(minLng, maxLng),
+                        pageable)
+                : restaurantRepository.search(category, minRating, minLat, minLng, maxLat, maxLng, pageable);
         return PageResponse.of(result.map(RestaurantResponse::from));
     }
 
@@ -109,8 +134,37 @@ public class RestaurantService {
         return switch (sort.trim().toLowerCase()) {
             case "rating_asc" -> Sort.by(Sort.Direction.ASC, "rating");
             case "rating_desc" -> Sort.by(Sort.Direction.DESC, "rating");
+            case "rating,asc" -> Sort.by(Sort.Direction.ASC, "rating");
+            case "rating,desc" -> Sort.by(Sort.Direction.DESC, "rating");
+            case "reviewcount,desc", "reviews", "review_count_desc", "reviewcount_desc" ->
+                    Sort.by(Sort.Direction.DESC, "reviewCount");
+            case "reviewcount,asc", "review_count_asc", "reviewcount_asc" ->
+                    Sort.by(Sort.Direction.ASC, "reviewCount");
+            case "distance,asc", "distance_asc" -> Sort.by(Sort.Direction.ASC, "id");
             case "name_asc" -> Sort.by(Sort.Direction.ASC, "name");
             default -> Sort.by(Sort.Direction.DESC, "rating");
         };
+    }
+
+    private static boolean isDistanceSort(String sort) {
+        if (sort == null) {
+            return false;
+        }
+        String normalized = sort.trim().toLowerCase();
+        return "distance,asc".equals(normalized) || "distance_asc".equals(normalized);
+    }
+
+    private static double resolveCenterLat(Double minLat, Double maxLat) {
+        if (minLat == null || maxLat == null) {
+            return 37.5665;
+        }
+        return (minLat + maxLat) / 2.0;
+    }
+
+    private static double resolveCenterLng(Double minLng, Double maxLng) {
+        if (minLng == null || maxLng == null) {
+            return 126.9780;
+        }
+        return (minLng + maxLng) / 2.0;
     }
 }

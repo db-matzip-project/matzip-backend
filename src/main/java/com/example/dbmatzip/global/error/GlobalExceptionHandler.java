@@ -4,6 +4,7 @@ import com.example.dbmatzip.domain.member.exception.DuplicateLoginIdException;
 import com.example.dbmatzip.domain.restaurant.exception.RestaurantNotFoundException;
 import com.example.dbmatzip.domain.schedule.exception.ScheduleNotFoundException;
 import com.example.dbmatzip.integration.kakao.KakaoApiException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -44,6 +45,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleIllegalState(IllegalStateException e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiErrorResponse("DATA_ERROR", e.getMessage()));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiErrorResponse> handleDataIntegrity(DataIntegrityViolationException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiErrorResponse("CONFLICT", "데이터 제약조건 충돌이 발생했습니다."));
     }
 
     @ExceptionHandler(DuplicateLoginIdException.class)

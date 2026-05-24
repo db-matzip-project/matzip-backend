@@ -12,8 +12,20 @@ This repository now includes the normalized core schema for:
 
 로컬 실행 설정은 **`src/main/resources/application.yml` 하나만** 사용합니다 (`application.properties`와 동시에 두면 오류 원인이 됩니다).
 
-- **JWT**: 운영에서는 `JWT_SECRET` 환경변수로 `jwt.secret` 을 반드시 설정하세요 (충분히 긴 문자열).
+- **JWT**: `JWT_SECRET` 환경변수는 개발/운영 모두 필수입니다 (최소 32자 이상).
 - 인증이 필요한 API는 헤더 `Authorization: Bearer <accessToken>` 을 붙입니다.
+  (하위호환을 위해 raw 토큰 문자열도 허용하지만, 프론트는 `Bearer` 형식 사용을 권장합니다.)
+
+## CORS / Auth 호출 규칙 (프론트 연동)
+
+- 허용 Origin: `http://localhost:5173`, `http://localhost:5174` (로컬 개발용)
+- 허용 Method: `GET, POST, PUT, PATCH, DELETE, OPTIONS`
+- 허용 Header: `Authorization`, `Content-Type` 등
+- `POST /api/v1/auth/signup`, `POST /api/v1/auth/login`, `POST /api/v1/auth/logout` 은 `permitAll`
+- `logout`은 JWT 무상태 구조로 서버 측에서는 noop이며, 인증 헤더 없이도 호출 가능합니다.
+- 보안 에러 응답 형식: `{"code":"...","message":"..."}`
+  - 미인증: `401 UNAUTHORIZED`
+  - 권한 없음: `403 FORBIDDEN`
 
 ## Swagger UI (API 검증)
 
@@ -39,6 +51,11 @@ This repository now includes the normalized core schema for:
 - `GET /api/v1/schedules/{id}/route/legs` — 저장된 순서 기준 구간 거리(km).
 - `GET /api/v1/schedules/{id}/route/suggested-order` — 근사 최단 방문 순서 제안 (DB 미반영).
 - `POST /api/v1/route/optimal-order` — 식당 ID 목록만으로 순서 제안.
+
+`GET /api/v1/restaurants` 파라미터 규칙:
+
+- `category`: `한식`, `일식`, `중식`, `양식`, `채식`, `디저트` 권장. (정확 일치 + category/description 부분 일치 검색)
+- `sort`: `rating,desc`, `rating,asc`, `reviewCount,desc`, `reviewCount,asc` 지원
 
 ### 일정 생성 시 매핑 데이터 적재
 

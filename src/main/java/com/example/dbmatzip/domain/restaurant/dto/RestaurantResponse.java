@@ -1,6 +1,7 @@
 package com.example.dbmatzip.domain.restaurant.dto;
 
 import com.example.dbmatzip.domain.restaurant.entity.Restaurant;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public record RestaurantResponse(
         Long id,
@@ -11,30 +12,43 @@ public record RestaurantResponse(
         String roadAddress,
         String phone,
         String description,
+        @Schema(description = "위도. 값이 없으면 0.0", example = "37.5665")
         double latitude,
+        @Schema(description = "경도. 값이 없으면 0.0", example = "126.9780")
         double longitude,
-        Double rating,
-        Integer reviewCount,
+        @Schema(description = "평점. 값이 없으면 0.0", example = "4.5")
+        double rating,
+        @Schema(description = "리뷰 수. 값이 없으면 0", example = "120")
+        int reviewCount,
         int scheduleAddCount) {
 
     public static RestaurantResponse from(Restaurant entity) {
-        if (entity.getLatitude() == null || entity.getLongitude() == null) {
-            throw new IllegalStateException("식당 위치 정보가 없습니다. id=" + entity.getId());
-        }
-        int pick = entity.getScheduleAddCount() == null ? 0 : entity.getScheduleAddCount();
+        int pick = valueOrZero(entity.getScheduleAddCount());
         return new RestaurantResponse(
                 entity.getId(),
                 entity.getApiId(),
-                entity.getName(),
-                entity.getCategory(),
-                entity.getAddress(),
-                entity.getRoadAddress(),
-                entity.getPhone(),
-                entity.getDescription(),
-                entity.getLatitude(),
-                entity.getLongitude(),
-                entity.getRating(),
-                entity.getReviewCount(),
+                nullToEmpty(entity.getName()),
+                nullToEmpty(entity.getCategory()),
+                nullToEmpty(entity.getAddress()),
+                nullToEmpty(entity.getRoadAddress()),
+                nullToEmpty(entity.getPhone()),
+                nullToEmpty(entity.getDescription()),
+                valueOrZero(entity.getLatitude()),
+                valueOrZero(entity.getLongitude()),
+                valueOrZero(entity.getRating()),
+                valueOrZero(entity.getReviewCount()),
                 pick);
+    }
+
+    private static double valueOrZero(Double value) {
+        return value == null ? 0.0 : value;
+    }
+
+    private static int valueOrZero(Integer value) {
+        return value == null ? 0 : value;
+    }
+
+    private static String nullToEmpty(String value) {
+        return value == null ? "" : value;
     }
 }

@@ -89,9 +89,11 @@ public interface ScheduleAnalyticsRepository extends JpaRepository<Schedule, Lon
                         INNER JOIN schedules s ON s.id = sr.schedule_id
                         WHERE COALESCE(sr.added_at, s.created_at) >= NOW() - INTERVAL '3 months'
                     )
-                    SELECT DISTINCT ra.restaurant_id
+                    SELECT ra.restaurant_id
                     FROM recent_activity ra
                     INNER JOIN similar_users su ON su.uid = ra.user_id
+                    GROUP BY ra.restaurant_id
+                    ORDER BY COUNT(*) DESC, COUNT(DISTINCT ra.user_id) DESC, ra.restaurant_id ASC
                     LIMIT :limit
                     """,
             nativeQuery = true)

@@ -24,10 +24,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (header != null && header.startsWith("Bearer ")) {
-            String raw = header.substring(7);
+        String token = resolveToken(header);
+        if (token != null) {
             try {
-                var claims = jwtTokenProvider.parseClaims(raw);
+                var claims = jwtTokenProvider.parseClaims(token);
                 Long userId = Long.parseLong(claims.getSubject());
                 String loginId = claims.get("loginId", String.class);
                 var principal = new MemberPrincipal(userId, loginId);
@@ -44,6 +44,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return request.getServletPath().startsWith("/api/v1/auth");
+        return request.getServletPath().startsWith("/api/v1/auth")
+                || "OPTIONS".equalsIgnoreCase(request.getMethod());
+    }
+
+    private static String resolveToken(String header) {
+        if (header == null) {
+            return null;
+        }
+        String trimmed = header.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        if (trimmed.startsWith("Bearer ")) {
+            String bearerToken = trimmed.substring(7).trim();
+            return bearerToken.isEmpty() ? null : bearerToken;
+        }
+        // Backward compatibility: allow raw JWT string in Authorization header.
+        return trimmed.chars().filter(ch -> ch == '.').count() == 2 ? trimmed : null;
     }
 }

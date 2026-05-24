@@ -31,7 +31,7 @@ kakao:
 
 # JWT (운영에서는 JWT_SECRET 필수 — 최소 32바이트 이상 문자열)
 jwt:
-  secret: ${JWT_SECRET:change-me-change-me-change-me-change-me-change-me-change-me!!}
+  secret: ${JWT_SECRET:}
   expiration-ms: 86400000
 
 # Swagger UI: /swagger-ui.html , OpenAPI JSON: /v3/api-docs
