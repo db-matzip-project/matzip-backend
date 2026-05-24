@@ -16,7 +16,7 @@ public interface ScheduleAnalyticsRepository extends JpaRepository<Schedule, Lon
                         SELECT preference_id FROM user_preferences WHERE user_id = :userId
                     ),
                     thresh AS (
-                        SELECT CASE WHEN COUNT(*) = 0 THEN NULL ELSE LEAST(3, COUNT(*)::int) END AS min_overlap
+                        SELECT CASE WHEN COUNT(*) = 0 THEN NULL ELSE LEAST(2, COUNT(*)::int) END AS min_overlap
                         FROM target_prefs
                     ),
                     similar_users AS (
@@ -63,7 +63,7 @@ public interface ScheduleAnalyticsRepository extends JpaRepository<Schedule, Lon
                         SELECT preference_id FROM user_preferences WHERE user_id = :userId
                     ),
                     thresh AS (
-                        SELECT CASE WHEN COUNT(*) = 0 THEN NULL ELSE LEAST(3, COUNT(*)::int) END AS min_overlap
+                        SELECT CASE WHEN COUNT(*) = 0 THEN NULL ELSE LEAST(2, COUNT(*)::int) END AS min_overlap
                         FROM target_prefs
                     ),
                     similar_users AS (

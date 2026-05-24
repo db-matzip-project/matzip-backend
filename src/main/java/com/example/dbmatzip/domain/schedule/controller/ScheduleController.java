@@ -80,7 +80,6 @@ public class ScheduleController {
     }
 
     @PostMapping("/{scheduleId}/items/from-place")
-    @ResponseStatus(HttpStatus.CREATED)
     @Operation(
             summary = "일정에 장소 추가(upsert)",
             description =
