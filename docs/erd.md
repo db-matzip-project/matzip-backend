@@ -35,7 +35,6 @@ erDiagram
     user_preferences {
         bigint user_id PK_FK
         bigint preference_id PK_FK
-        int weight "기본 1"
     }
 
     restaurants {

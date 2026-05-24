@@ -1,7 +1,6 @@
 package com.example.dbmatzip.domain.preference.entity;
 
 import com.example.dbmatzip.domain.member.entity.User;
-import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -33,14 +32,10 @@ public class UserPreference {
     @JoinColumn(name = "preference_id")
     private Preference preference;
 
-    @Column(nullable = false)
-    private Integer weight;
-
     @Builder
-    private UserPreference(User user, Preference preference, Integer weight) {
+    private UserPreference(User user, Preference preference) {
         this.id = new UserPreferenceId(user.getId(), preference.getId());
         this.user = user;
         this.preference = preference;
-        this.weight = weight;
     }
 }

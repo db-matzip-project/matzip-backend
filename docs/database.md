@@ -10,6 +10,8 @@
 | 2 | [`postgis.sql`](../src/main/resources/db/postgis.sql) | `CREATE EXTENSION postgis` + bbox 검색용 GIST |
 | 3 | [`triggers.sql`](../src/main/resources/db/triggers.sql) | `schedule_restaurants` 삽입/삭제 시 `restaurants.schedule_add_count` 동기화 |
 
+기존 DB에 레거시 `restaurants.location`(geometry 등) 컬럼만 남아 있다면 선택적으로 [`drop-restaurants-location-column.sql`](../src/main/resources/db/drop-restaurants-location-column.sql)을 실행합니다(앱과 SSOT DDL에는 해당 컬럼 없음).
+
 레거시 평면 스키마(비교용): [`schema_legacy_flat_schedules.sql`](../src/main/resources/db/schema_legacy_flat_schedules.sql)
 
 데모 데이터: [`sample-data.sql`](../src/main/resources/db/sample-data.sql) — **빈 DB 또는 초기화 후 1회** 실행 권장.

@@ -38,8 +38,7 @@ public class UserPreferenceApplicationService {
                 .map(up -> new UserPreferenceItemResponse(
                         up.getPreference().getId(),
                         up.getPreference().getCode(),
-                        up.getPreference().getDisplayName(),
-                        up.getWeight()))
+                        up.getPreference().getDisplayName()))
                 .toList();
     }
 
@@ -62,7 +61,7 @@ public class UserPreferenceApplicationService {
         for (Long prefId : ids) {
             Preference pref = byId.get(prefId);
             UserPreference row =
-                    UserPreference.builder().user(user).preference(pref).weight(1).build();
+                    UserPreference.builder().user(user).preference(pref).build();
             userPreferenceRepository.save(row);
         }
         return getMine(userId);

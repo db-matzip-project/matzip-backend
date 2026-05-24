@@ -88,7 +88,6 @@ public class AuthService {
                 .map(preferenceId -> UserPreference.builder()
                         .user(user)
                         .preference(preferenceById.get(preferenceId))
-                        .weight(1)
                         .build())
                 .toList();
         userPreferenceRepository.saveAll(rows);

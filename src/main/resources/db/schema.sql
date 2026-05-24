@@ -48,7 +48,6 @@ COMMENT ON TABLE user_preferences IS '회원–취향 매핑. 복합 PK 로 중�
 CREATE TABLE IF NOT EXISTS user_preferences (
     user_id        BIGINT NOT NULL,
     preference_id  BIGINT NOT NULL,
-    weight         INTEGER NOT NULL DEFAULT 1,
     PRIMARY KEY (user_id, preference_id),
     CONSTRAINT fk_up_user
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,

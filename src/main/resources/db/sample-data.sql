@@ -30,15 +30,15 @@ VALUES
     ('eric', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '윤에릭', '01044444444', 'eric', 25)
 ON CONFLICT (login_id) DO NOTHING;
 
-INSERT INTO user_preferences (user_id, preference_id, weight)
-SELECT u.id, p.id, 5
+INSERT INTO user_preferences (user_id, preference_id)
+SELECT u.id, p.id
 FROM users u
 JOIN preferences p ON p.code = 'SPICY_HIGH'
 WHERE u.login_id IN ('alice', 'bora', 'chul', 'eric')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO user_preferences (user_id, preference_id, weight)
-SELECT u.id, p.id, 3
+INSERT INTO user_preferences (user_id, preference_id)
+SELECT u.id, p.id
 FROM users u
 JOIN preferences p ON p.code = 'SPICY_MED'
 WHERE u.login_id IN ('alice', 'bora')
