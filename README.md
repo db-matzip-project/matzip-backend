@@ -60,7 +60,7 @@ This repository now includes the normalized core schema for:
 - `minRating`: 최소 평점 필터 (`4.0`, `4.5` 등)
 - `sortBy`(권장): `rating`(평점 높은순), `rating_asc`, `reviews`(리뷰 많은순), `review_count_asc`, `distance`
 - `sort`(하위호환): 기존 파라미터도 계속 지원
-- `tasteSimilar=true`: 유사 사용자 추천 ID로 우선 검색하며, 유사 데이터가 부족해 ID가 비면 **일반 검색 결과로 자동 폴백**합니다.
+- `tasteSimilar=true`: 유사 사용자 추천 ID로 검색(bounds·카테고리 등과 교집합); **후보 식당 ID가 없으면 빈 페이지**(`totalElements`: 0)를 반환합니다.
 
 ## 리뷰 API (프론트 연동용)
 
@@ -163,7 +163,7 @@ The requirement:
 는 **`schedule_restaurants` + `schedules`** 스키마 기준 네이티브 SQL로 구현되어 있습니다.
 
 - 최근 활동: `COALESCE(schedule_restaurants.added_at, schedules.created_at)` 기준 **최근 3개월**
-- 유사 사용자: **내가 고른 취향 태그와 겹치는 개수 ≥ min(2, 내 태그 개수)**
+- 유사 사용자: **내 태그 수를 N이라 할 때, 겹치는 취향 개수 ≥ ⌈N/2⌉** (절반 이상 동일·올림; N=0이면 유사 사용자 없음)
 
 구현 위치:
 

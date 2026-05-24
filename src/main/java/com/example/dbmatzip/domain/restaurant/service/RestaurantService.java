@@ -54,17 +54,7 @@ public class RestaurantService {
             Long userId = requireUserId(authentication);
             List<Long> ids = scheduleAnalyticsRepository.findRecommendedRestaurantIds(userId, MAX_RECOMMENDED_IDS);
             if (ids.isEmpty()) {
-                // 유사 사용자 데이터가 부족한 초기 상태에서는 빈 화면 대신 일반 검색 결과로 폴백합니다.
-                return searchWithoutTasteSimilar(
-                        category,
-                        minRating,
-                        minLat,
-                        minLng,
-                        maxLat,
-                        maxLng,
-                        pageable,
-                        sortByDistance,
-                        normalizedSort);
+                return PageResponse.of(Page.empty(pageable));
             }
             Page<Restaurant> result = sortByDistance
                     ? restaurantRepository.searchAmongIdsOrderByDistance(
@@ -104,32 +94,6 @@ public class RestaurantService {
                         pageable)
                 : restaurantRepository.search(categoryArg, minRating, minLat, minLng, maxLat, maxLng, normalizedSort, pageable);
         return PageResponse.of(result.map(RestaurantResponse::from));
-    }
-
-    private PageResponse<RestaurantResponse> searchWithoutTasteSimilar(
-            String category,
-            Double minRating,
-            Double minLat,
-            Double minLng,
-            Double maxLat,
-            Double maxLng,
-            Pageable pageable,
-            boolean sortByDistance,
-            String normalizedSort) {
-        Page<Restaurant> fallback = sortByDistance
-                ? restaurantRepository.searchOrderByDistance(
-                        category,
-                        minRating,
-                        minLat,
-                        minLng,
-                        maxLat,
-                        maxLng,
-                        resolveCenterLat(minLat, maxLat),
-                        resolveCenterLng(minLng, maxLng),
-                        pageable)
-                : restaurantRepository.search(
-                        category, minRating, minLat, minLng, maxLat, maxLng, normalizedSort, pageable);
-        return PageResponse.of(fallback.map(RestaurantResponse::from));
     }
 
     private static Long requireUserId(Authentication authentication) {

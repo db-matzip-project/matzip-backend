@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+/** 유사 취향: 겹치는 {@code preference} 수 ≥ {@code ⌈내 태그 수 / 2⌉}(절반 이상·올림). 태그 0건이면 유사 유저 없음. */
 public interface ScheduleAnalyticsRepository extends JpaRepository<Schedule, Long> {
 
     @Query(
@@ -16,7 +17,7 @@ public interface ScheduleAnalyticsRepository extends JpaRepository<Schedule, Lon
                         SELECT preference_id FROM user_preferences WHERE user_id = :userId
                     ),
                     thresh AS (
-                        SELECT CASE WHEN COUNT(*) = 0 THEN NULL ELSE LEAST(2, COUNT(*)::int) END AS min_overlap
+                        SELECT CASE WHEN COUNT(*) = 0 THEN NULL ELSE CEILING(COUNT(*)::numeric / 2)::int END AS min_overlap
                         FROM target_prefs
                     ),
                     similar_users AS (
@@ -58,7 +59,7 @@ public interface ScheduleAnalyticsRepository extends JpaRepository<Schedule, Lon
                         SELECT preference_id FROM user_preferences WHERE user_id = :userId
                     ),
                     thresh AS (
-                        SELECT CASE WHEN COUNT(*) = 0 THEN NULL ELSE LEAST(2, COUNT(*)::int) END AS min_overlap
+                        SELECT CASE WHEN COUNT(*) = 0 THEN NULL ELSE CEILING(COUNT(*)::numeric / 2)::int END AS min_overlap
                         FROM target_prefs
                     ),
                     similar_users AS (
