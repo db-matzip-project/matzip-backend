@@ -124,7 +124,7 @@ This repository now includes the normalized core schema for:
 }
 ```
 
-`items/from-place` 요청 예 (필수: `place.apiId` 또는 카카오와 동일한 JSON 키 `id`, `place.name`, `place.latitude`, `place.longitude`):
+`items/from-place` 요청 예 (필수: `place.apiId` 또는 카카오와 동일한 JSON 키 `id`, `place.name`, `place.latitude`, `place.longitude`. **카테고리:** `category`(`category_name`)·`category_group_code`(`FD6`|`CE7` 등)·`category_group_name` 같이 넣으면 저장 시 정규화가 정확해집니다.)
 
 ```json
 {
@@ -133,6 +133,8 @@ This repository now includes the normalized core schema for:
     "id": "카카오_장소_id",
     "name": "해운대 국밥집",
     "category": "음식점 > 한식 > 국밥",
+    "category_group_code": "FD6",
+    "category_group_name": "음식점",
     "address": "부산 해운대구 …",
     "roadAddress": "부산광역시 …",
     "phone": "051-…",
@@ -141,6 +143,8 @@ This repository now includes the normalized core schema for:
   }
 }
 ```
+
+**저장·검색 카테고리 값:** **`한식`·`일식`·`중식`·`양식`·`채식`·`디저트`** 만 허용합니다. 카카오 `from-place`/keyword import 저장 시 카테고리명·그룹코드로 자동 매핑됩니다 (`CE7` 카페 → `디저트`, `FD6`은 `category_name` 세부값으로 분류, 알 수 없으면 `한식`). `GET /api/v1/restaurants?category=` 도 위 여섯 값만 받습니다. 예전 행은 `normalize-restaurant-categories.sql` 로 맞춥니다.
 
 **DB 과제 제출 기준 DDL**: `src/main/resources/db/schema.sql` → 이어서 `postgis.sql`, `triggers.sql` 순 실행. 요약·인덱스·트리거 논리는 **[docs/database.md](docs/database.md)** 참고.
 

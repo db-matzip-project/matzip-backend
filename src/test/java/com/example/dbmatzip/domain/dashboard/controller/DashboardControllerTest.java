@@ -24,7 +24,7 @@ class DashboardControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private DashboardService dashboardService;
 
     @Test

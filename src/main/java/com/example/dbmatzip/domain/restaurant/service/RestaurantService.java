@@ -5,6 +5,7 @@ import com.example.dbmatzip.domain.restaurant.dto.PageResponse;
 import com.example.dbmatzip.domain.restaurant.dto.RestaurantResponse;
 import com.example.dbmatzip.domain.restaurant.entity.Restaurant;
 import com.example.dbmatzip.domain.restaurant.exception.RestaurantNotFoundException;
+import com.example.dbmatzip.domain.restaurant.model.RestaurantCategory;
 import com.example.dbmatzip.domain.restaurant.repository.RestaurantRepository;
 import com.example.dbmatzip.global.security.MemberPrincipal;
 import java.util.List;
@@ -44,6 +45,7 @@ public class RestaurantService {
             Authentication authentication) {
 
         validateBoundingBox(minLat, minLng, maxLat, maxLng);
+        String categoryArg = validatedCategoryOrNull(category);
         String normalizedSort = normalizeSort(sortBy, sort);
         boolean sortByDistance = isDistanceSort(normalizedSort);
         Pageable pageable = PageRequest.of(page, size);
@@ -57,7 +59,7 @@ public class RestaurantService {
             Page<Restaurant> result = sortByDistance
                     ? restaurantRepository.searchAmongIdsOrderByDistance(
                             ids,
-                            category,
+                            categoryArg,
                             minRating,
                             minLat,
                             minLng,
@@ -67,13 +69,21 @@ public class RestaurantService {
                             resolveCenterLng(minLng, maxLng),
                             pageable)
                     : restaurantRepository.searchAmongIds(
-                            ids, category, minRating, minLat, minLng, maxLat, maxLng, normalizedSort, pageable);
+                            ids,
+                            categoryArg,
+                            minRating,
+                            minLat,
+                            minLng,
+                            maxLat,
+                            maxLng,
+                            normalizedSort,
+                            pageable);
             return PageResponse.of(result.map(RestaurantResponse::from));
         }
 
         Page<Restaurant> result = sortByDistance
                 ? restaurantRepository.searchOrderByDistance(
-                        category,
+                        categoryArg,
                         minRating,
                         minLat,
                         minLng,
@@ -82,8 +92,7 @@ public class RestaurantService {
                         resolveCenterLat(minLat, maxLat),
                         resolveCenterLng(minLng, maxLng),
                         pageable)
-                : restaurantRepository.search(
-                        category, minRating, minLat, minLng, maxLat, maxLng, normalizedSort, pageable);
+                : restaurantRepository.search(categoryArg, minRating, minLat, minLng, maxLat, maxLng, normalizedSort, pageable);
         return PageResponse.of(result.map(RestaurantResponse::from));
     }
 
@@ -104,6 +113,20 @@ public class RestaurantService {
         Restaurant restaurant =
                 restaurantRepository.findById(id).orElseThrow(() -> new RestaurantNotFoundException(id));
         return RestaurantResponse.from(restaurant);
+    }
+
+    private static String validatedCategoryOrNull(String category) {
+        if (category == null || category.isBlank()) {
+            return null;
+        }
+        String trimmed = category.trim();
+        if (!RestaurantCategory.ALLOWED_LABELS.contains(trimmed)) {
+            throw new IllegalArgumentException(
+                    "category 는 "
+                            + String.join(", ", RestaurantCategory.ALLOWED_SEARCH_VALUES)
+                            + " 중 하나만 허용됩니다.");
+        }
+        return trimmed;
     }
 
     private static void validateBoundingBox(Double minLat, Double minLng, Double maxLat, Double maxLng) {

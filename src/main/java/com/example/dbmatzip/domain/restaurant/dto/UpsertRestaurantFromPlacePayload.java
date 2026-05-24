@@ -12,8 +12,12 @@ public record UpsertRestaurantFromPlacePayload(
         /** 카카오 Local 문서의 id 와 동일 (JSON 필드 이름 id 도 허용) */
         @JsonAlias("id") @NotBlank String apiId,
         @NotBlank String name,
-        /** 장소 카테고리 문자열(선택). 없으면 "기타" 쪽 분류될 수 있습니다. */
-        String category,
+        /** 카카오 {@code category_name} 전체 문자열 (예: {@code 음식점 > 한식 > 국밥}) */
+        @JsonAlias({"category_name"}) String category,
+        /** 카카오 대분류 코드 (예: {@code FD6} 음식점, {@code CE7} 카페). 있으면 분류 정확도가 올라갑니다. */
+        @JsonAlias("category_group_code") String categoryGroupCode,
+        /** 카카오 {@code category_group_name} (선택). */
+        @JsonAlias("category_group_name") String categoryGroupName,
         String address,
         String roadAddress,
         String phone,

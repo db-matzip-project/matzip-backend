@@ -30,7 +30,10 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                         OR (:category = '중식' AND r.category ILIKE '%chinese%')
                         OR (:category = '양식' AND (r.category ILIKE '%western%' OR r.category ILIKE '%italian%' OR r.category ILIKE '%french%'))
                         OR (:category = '채식' AND (r.category ILIKE '%vegetarian%' OR r.category ILIKE '%vegan%'))
-                        OR (:category = '디저트' AND (r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'))
+                        OR (:category = '디저트' AND (
+                            r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'
+                            OR trim(upper(r.category)) IN ('CE7')
+                            OR r.description ILIKE '%카페%'))
                     )
                     AND (:minRating IS NULL OR r.rating >= :minRating)
                     AND (
@@ -60,7 +63,10 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                         OR (:category = '중식' AND r.category ILIKE '%chinese%')
                         OR (:category = '양식' AND (r.category ILIKE '%western%' OR r.category ILIKE '%italian%' OR r.category ILIKE '%french%'))
                         OR (:category = '채식' AND (r.category ILIKE '%vegetarian%' OR r.category ILIKE '%vegan%'))
-                        OR (:category = '디저트' AND (r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'))
+                        OR (:category = '디저트' AND (
+                            r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'
+                            OR trim(upper(r.category)) IN ('CE7')
+                            OR r.description ILIKE '%카페%'))
                     )
                     AND (:minRating IS NULL OR r.rating >= :minRating)
                     AND (
@@ -98,7 +104,10 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                         OR (:category = '중식' AND r.category ILIKE '%chinese%')
                         OR (:category = '양식' AND (r.category ILIKE '%western%' OR r.category ILIKE '%italian%' OR r.category ILIKE '%french%'))
                         OR (:category = '채식' AND (r.category ILIKE '%vegetarian%' OR r.category ILIKE '%vegan%'))
-                        OR (:category = '디저트' AND (r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'))
+                        OR (:category = '디저트' AND (
+                            r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'
+                            OR trim(upper(r.category)) IN ('CE7')
+                            OR r.description ILIKE '%카페%'))
                     )
                     AND (:minRating IS NULL OR r.rating >= :minRating)
                     AND (
@@ -129,7 +138,10 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                         OR (:category = '중식' AND r.category ILIKE '%chinese%')
                         OR (:category = '양식' AND (r.category ILIKE '%western%' OR r.category ILIKE '%italian%' OR r.category ILIKE '%french%'))
                         OR (:category = '채식' AND (r.category ILIKE '%vegetarian%' OR r.category ILIKE '%vegan%'))
-                        OR (:category = '디저트' AND (r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'))
+                        OR (:category = '디저트' AND (
+                            r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'
+                            OR trim(upper(r.category)) IN ('CE7')
+                            OR r.description ILIKE '%카페%'))
                     )
                     AND (:minRating IS NULL OR r.rating >= :minRating)
                     AND (
@@ -166,7 +178,10 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                         OR (:category = '중식' AND r.category ILIKE '%chinese%')
                         OR (:category = '양식' AND (r.category ILIKE '%western%' OR r.category ILIKE '%italian%' OR r.category ILIKE '%french%'))
                         OR (:category = '채식' AND (r.category ILIKE '%vegetarian%' OR r.category ILIKE '%vegan%'))
-                        OR (:category = '디저트' AND (r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'))
+                        OR (:category = '디저트' AND (
+                            r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'
+                            OR trim(upper(r.category)) IN ('CE7')
+                            OR r.description ILIKE '%카페%'))
                     )
                     AND (:minRating IS NULL OR r.rating >= :minRating)
                     AND (
@@ -193,7 +208,10 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                         OR (:category = '중식' AND r.category ILIKE '%chinese%')
                         OR (:category = '양식' AND (r.category ILIKE '%western%' OR r.category ILIKE '%italian%' OR r.category ILIKE '%french%'))
                         OR (:category = '채식' AND (r.category ILIKE '%vegetarian%' OR r.category ILIKE '%vegan%'))
-                        OR (:category = '디저트' AND (r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'))
+                        OR (:category = '디저트' AND (
+                            r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'
+                            OR trim(upper(r.category)) IN ('CE7')
+                            OR r.description ILIKE '%카페%'))
                     )
                     AND (:minRating IS NULL OR r.rating >= :minRating)
                     AND (
@@ -231,7 +249,10 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                         OR (:category = '중식' AND r.category ILIKE '%chinese%')
                         OR (:category = '양식' AND (r.category ILIKE '%western%' OR r.category ILIKE '%italian%' OR r.category ILIKE '%french%'))
                         OR (:category = '채식' AND (r.category ILIKE '%vegetarian%' OR r.category ILIKE '%vegan%'))
-                        OR (:category = '디저트' AND (r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'))
+                        OR (:category = '디저트' AND (
+                            r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'
+                            OR trim(upper(r.category)) IN ('CE7')
+                            OR r.description ILIKE '%카페%'))
                     )
                     AND (:minRating IS NULL OR r.rating >= :minRating)
                     AND (
@@ -259,7 +280,10 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                         OR (:category = '중식' AND r.category ILIKE '%chinese%')
                         OR (:category = '양식' AND (r.category ILIKE '%western%' OR r.category ILIKE '%italian%' OR r.category ILIKE '%french%'))
                         OR (:category = '채식' AND (r.category ILIKE '%vegetarian%' OR r.category ILIKE '%vegan%'))
-                        OR (:category = '디저트' AND (r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'))
+                        OR (:category = '디저트' AND (
+                            r.category ILIKE '%dessert%' OR r.category ILIKE '%cafe%' OR r.category ILIKE '%bakery%'
+                            OR trim(upper(r.category)) IN ('CE7')
+                            OR r.description ILIKE '%카페%'))
                     )
                     AND (:minRating IS NULL OR r.rating >= :minRating)
                     AND (

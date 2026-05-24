@@ -1,11 +1,15 @@
 -- restaurants.category 백필 정규화 스크립트
 -- 목적: 기존 카테고리 데이터(FD6, 영문, 원본 문자열)를
---      프론트 필터 기준 카테고리(한식/일식/중식/양식/채식/디저트/기타)로 일괄 정리
+--      한식·일식·중식·양식·채식·디저트 중 하나로 정리합니다. 패턴 매칭이 안 되면 한식 으로 둡니다.
 --
 -- 실행 예시:
 -- psql -h localhost -p 5432 -U postgres -d matzip_db -f "src/main/resources/db/normalize-restaurant-categories.sql"
 
 BEGIN;
+
+UPDATE restaurants
+SET category = '디저트'
+WHERE trim(upper(category)) = 'CE7';
 
 UPDATE restaurants
 SET category =
@@ -41,7 +45,7 @@ SET category =
             THEN '한식'
 
         -- 그 외
-        ELSE '기타'
+        ELSE '한식'
     END;
 
 COMMIT;
