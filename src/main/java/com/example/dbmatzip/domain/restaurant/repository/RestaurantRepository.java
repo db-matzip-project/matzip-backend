@@ -40,6 +40,12 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                             ST_SetSRID(ST_MakePoint(r.longitude, r.latitude), 4326)
                         )
                     )
+                    ORDER BY
+                        CASE WHEN :sortBy = 'rating_asc' THEN r.rating END ASC NULLS LAST,
+                        CASE WHEN :sortBy = 'rating_desc' THEN r.rating END DESC NULLS LAST,
+                        CASE WHEN :sortBy = 'review_count_asc' THEN r.review_count END ASC NULLS LAST,
+                        CASE WHEN :sortBy = 'review_count_desc' THEN r.review_count END DESC NULLS LAST,
+                        r.id ASC
                     """,
             countQuery =
                     """
@@ -73,6 +79,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             @Param("minLng") Double minLng,
             @Param("maxLat") Double maxLat,
             @Param("maxLng") Double maxLng,
+            @Param("sortBy") String sortBy,
             Pageable pageable);
 
     /** 입맛 비슷한 사용자 추천 식당 ID 집합과 bounds 검색 교집합 */
@@ -101,6 +108,12 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                             ST_SetSRID(ST_MakePoint(r.longitude, r.latitude), 4326)
                         )
                     )
+                    ORDER BY
+                        CASE WHEN :sortBy = 'rating_asc' THEN r.rating END ASC NULLS LAST,
+                        CASE WHEN :sortBy = 'rating_desc' THEN r.rating END DESC NULLS LAST,
+                        CASE WHEN :sortBy = 'review_count_asc' THEN r.review_count END ASC NULLS LAST,
+                        CASE WHEN :sortBy = 'review_count_desc' THEN r.review_count END DESC NULLS LAST,
+                        r.id ASC
                     """,
             countQuery =
                     """
@@ -136,6 +149,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             @Param("minLng") Double minLng,
             @Param("maxLat") Double maxLat,
             @Param("maxLng") Double maxLng,
+            @Param("sortBy") String sortBy,
             Pageable pageable);
 
     @Query(

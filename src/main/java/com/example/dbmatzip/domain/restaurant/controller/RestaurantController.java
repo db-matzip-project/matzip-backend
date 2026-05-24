@@ -38,11 +38,23 @@ public class RestaurantController {
             @RequestParam(required = false) Double maxLng,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false, defaultValue = "false") boolean tasteSimilar,
             Authentication authentication) {
         return restaurantService.search(
-                category, minRating, minLat, minLng, maxLat, maxLng, page, size, sort, tasteSimilar, authentication);
+                category,
+                minRating,
+                minLat,
+                minLng,
+                maxLat,
+                maxLng,
+                page,
+                size,
+                sortBy,
+                sort,
+                tasteSimilar,
+                authentication);
     }
 
     @GetMapping("/{id}")

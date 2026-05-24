@@ -55,7 +55,53 @@ This repository now includes the normalized core schema for:
 `GET /api/v1/restaurants` 파라미터 규칙:
 
 - `category`: `한식`, `일식`, `중식`, `양식`, `채식`, `디저트` 권장. (정확 일치 + category/description 부분 일치 검색)
-- `sort`: `rating,desc`, `rating,asc`, `reviewCount,desc`, `reviewCount,asc` 지원
+- `minRating`: 최소 평점 필터 (`4.0`, `4.5` 등)
+- `sortBy`(권장): `rating`(평점 높은순), `rating_asc`, `reviews`(리뷰 많은순), `review_count_asc`, `distance`
+- `sort`(하위호환): 기존 파라미터도 계속 지원
+
+## 리뷰 API (프론트 연동용)
+
+리뷰/평점은 이제 웹 사용자가 입력한 값이 `reviews` 테이블에 저장되고, 저장/삭제 시 식당 집계값(`restaurants.rating`, `restaurants.review_count`)도 즉시 갱신됩니다.
+
+- `POST /api/v1/restaurants/{restaurantId}/reviews` (Bearer JWT)
+  - 설명: 리뷰 작성/수정(upsert). 같은 사용자가 같은 식당에 다시 작성하면 수정됩니다.
+  - 요청:
+
+```json
+{
+  "content": "맛있고 재방문 의사 있어요",
+  "rating": 5
+}
+```
+
+  - 성공 응답(201):
+
+```json
+{
+  "id": 12,
+  "restaurantId": 3,
+  "userId": 7,
+  "content": "맛있고 재방문 의사 있어요",
+  "rating": 5,
+  "createdAt": "2026-05-24T16:28:31.102",
+  "updatedAt": "2026-05-24T16:28:31.102"
+}
+```
+
+- `GET /api/v1/restaurants/{restaurantId}/reviews?page=0&size=20` (공개)
+  - 설명: 식당 리뷰 목록 조회(페이지네이션)
+  - 성공 응답: 기존 `PageResponse<T>` 포맷
+
+- `DELETE /api/v1/restaurants/{restaurantId}/reviews/{reviewId}` (Bearer JWT)
+  - 설명: 본인 리뷰만 삭제 가능
+  - 성공 응답: `204 No Content`
+
+주요 에러 코드:
+
+- `400 BAD_REQUEST`: rating 범위(1~5) 위반, 식당 ID 불일치 등
+- `401 UNAUTHORIZED`: 토큰 누락/만료
+- `403 FORBIDDEN`: 본인 리뷰가 아닌 삭제 시도
+- `404 NOT_FOUND`: 식당 또는 리뷰 없음
 
 ### 일정 생성 시 매핑 데이터 적재
 

@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -39,16 +38,15 @@ public class RestaurantService {
             Double maxLng,
             int page,
             int size,
+            String sortBy,
             String sort,
             boolean tasteSimilar,
             Authentication authentication) {
 
         validateBoundingBox(minLat, minLng, maxLat, maxLng);
-        boolean sortByDistance = isDistanceSort(sort);
-        Pageable pageable = PageRequest.of(page, size, resolveSort(sort));
-        if (sortByDistance) {
-            pageable = PageRequest.of(page, size);
-        }
+        String normalizedSort = normalizeSort(sortBy, sort);
+        boolean sortByDistance = isDistanceSort(normalizedSort);
+        Pageable pageable = PageRequest.of(page, size);
 
         if (tasteSimilar) {
             Long userId = requireUserId(authentication);
@@ -68,7 +66,8 @@ public class RestaurantService {
                             resolveCenterLat(minLat, maxLat),
                             resolveCenterLng(minLng, maxLng),
                             pageable)
-                    : restaurantRepository.searchAmongIds(ids, category, minRating, minLat, minLng, maxLat, maxLng, pageable);
+                    : restaurantRepository.searchAmongIds(
+                            ids, category, minRating, minLat, minLng, maxLat, maxLng, normalizedSort, pageable);
             return PageResponse.of(result.map(RestaurantResponse::from));
         }
 
@@ -83,7 +82,8 @@ public class RestaurantService {
                         resolveCenterLat(minLat, maxLat),
                         resolveCenterLng(minLng, maxLng),
                         pageable)
-                : restaurantRepository.search(category, minRating, minLat, minLng, maxLat, maxLng, pageable);
+                : restaurantRepository.search(
+                        category, minRating, minLat, minLng, maxLat, maxLng, normalizedSort, pageable);
         return PageResponse.of(result.map(RestaurantResponse::from));
     }
 
@@ -127,31 +127,25 @@ public class RestaurantService {
         return n;
     }
 
-    private static Sort resolveSort(String sort) {
-        if (sort == null || sort.isBlank()) {
-            return Sort.by(Sort.Direction.DESC, "rating");
+    private static String normalizeSort(String sortBy, String legacySort) {
+        String candidate = (sortBy != null && !sortBy.isBlank()) ? sortBy : legacySort;
+        if (candidate == null || candidate.isBlank()) {
+            return "rating_desc";
         }
-        return switch (sort.trim().toLowerCase()) {
-            case "rating_asc" -> Sort.by(Sort.Direction.ASC, "rating");
-            case "rating_desc" -> Sort.by(Sort.Direction.DESC, "rating");
-            case "rating,asc" -> Sort.by(Sort.Direction.ASC, "rating");
-            case "rating,desc" -> Sort.by(Sort.Direction.DESC, "rating");
-            case "reviewcount,desc", "reviews", "review_count_desc", "reviewcount_desc" ->
-                    Sort.by(Sort.Direction.DESC, "reviewCount");
-            case "reviewcount,asc", "review_count_asc", "reviewcount_asc" ->
-                    Sort.by(Sort.Direction.ASC, "reviewCount");
-            case "distance,asc", "distance_asc" -> Sort.by(Sort.Direction.ASC, "id");
-            case "name_asc" -> Sort.by(Sort.Direction.ASC, "name");
-            default -> Sort.by(Sort.Direction.DESC, "rating");
+        String normalized = candidate.trim().toLowerCase();
+        return switch (normalized) {
+            case "rating", "rating_desc", "rating,desc" -> "rating_desc";
+            case "rating_asc", "rating,asc" -> "rating_asc";
+            case "reviews", "review", "reviewcount,desc", "review_count_desc", "reviewcount_desc" ->
+                    "review_count_desc";
+            case "reviewcount,asc", "review_count_asc", "reviewcount_asc" -> "review_count_asc";
+            case "distance", "distance,asc", "distance_asc" -> "distance_asc";
+            default -> "rating_desc";
         };
     }
 
     private static boolean isDistanceSort(String sort) {
-        if (sort == null) {
-            return false;
-        }
-        String normalized = sort.trim().toLowerCase();
-        return "distance,asc".equals(normalized) || "distance_asc".equals(normalized);
+        return "distance_asc".equals(sort);
     }
 
     private static double resolveCenterLat(Double minLat, Double maxLat) {

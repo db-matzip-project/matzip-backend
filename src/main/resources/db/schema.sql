@@ -87,6 +87,35 @@ CREATE INDEX IF NOT EXISTS idx_restaurants_category ON restaurants (category)
 CREATE INDEX IF NOT EXISTS idx_restaurants_rating ON restaurants (rating DESC NULLS LAST);
 
 -- ---------------------------------------------------------------------------
+-- reviews : 사용자-식당 리뷰 (사용자당 식당 1개 리뷰)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS reviews (
+    id             BIGSERIAL PRIMARY KEY,
+    restaurant_id  BIGINT NOT NULL,
+    user_id        BIGINT NOT NULL,
+    content        VARCHAR(1000) NOT NULL,
+    rating         INTEGER NOT NULL,
+    created_at     TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT LOCALTIMESTAMP,
+    updated_at     TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT LOCALTIMESTAMP,
+    CONSTRAINT fk_reviews_restaurant
+        FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE,
+    CONSTRAINT fk_reviews_user
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT uq_reviews_restaurant_user UNIQUE (restaurant_id, user_id),
+    CONSTRAINT chk_reviews_rating CHECK (rating BETWEEN 1 AND 5)
+);
+
+COMMENT ON TABLE reviews IS '사용자-식당 리뷰. 사용자당 식당 1개 리뷰(수정 가능)';
+COMMENT ON COLUMN reviews.rating IS '리뷰 평점(1~5)';
+
+CREATE INDEX IF NOT EXISTS idx_reviews_restaurant_created_at
+    ON reviews (restaurant_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reviews_user_created_at
+    ON reviews (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reviews_restaurant_rating
+    ON reviews (restaurant_id, rating);
+
+-- ---------------------------------------------------------------------------
 -- schedules : 회원별 여행 일정 헤더
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS schedules (
