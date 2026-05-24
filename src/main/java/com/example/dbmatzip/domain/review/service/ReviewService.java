@@ -53,6 +53,12 @@ public class ReviewService {
                 .map(ReviewResponse::from);
     }
 
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<ReviewResponse> listMine(Long userId, int page, int size) {
+        return reviewRepository.findByUser_IdOrderByUpdatedAtDesc(userId, PageRequest.of(page, size))
+                .map(r -> ReviewResponse.from(r, r.getRestaurant().getName()));
+    }
+
     @Transactional
     public void delete(Long restaurantId, Long reviewId, Long userId) {
         Review review = reviewRepository.findById(reviewId)
