@@ -15,10 +15,11 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     Optional<Review> findByRestaurantIdAndUserId(Long restaurantId, Long userId);
 
+    @EntityGraph(attributePaths = {"user"})
     Page<Review> findByRestaurantId(Long restaurantId, Pageable pageable);
 
     /** 마이페이지: 본인 리뷰 + 식당명 로딩(N+1 방지). */
-    @EntityGraph(attributePaths = {"restaurant"})
+    @EntityGraph(attributePaths = {"restaurant", "user"})
     Page<Review> findByUser_IdOrderByUpdatedAtDesc(Long userId, Pageable pageable);
 
     long countByRestaurantId(Long restaurantId);
