@@ -1,6 +1,6 @@
 # 데이터베이스 설계 (DB 과제 제출용)
 
-이 프로젝트는 **회원–취향(N:M)**, **식당 마스터**, **일정 헤더–일정별 식당 매핑**으로 정규화되어 있습니다. 지도 검색은 **PostGIS 표현식 GIST 인덱스**, 일정 편의 기능은 **`schedule_add_count` 비정규화 + 트리거**로 설명할 수 있습니다.
+이 프로젝트는 **회원–취향(N:M)**, **식당 마스터**, **일정 헤더–일정별 식당 매핑**으로 정규화되어 있습니다. 지도 검색은 **PostGIS 표현식 GIST 인덱스**로 처리합니다.
 
 ## 1. 실행 순서 (PostgreSQL)
 
@@ -8,7 +8,8 @@
 |------|------|------|
 | 1 | [`schema.sql`](../src/main/resources/db/schema.sql) | 테이블·PK/FK/CHECK·B-tree 보조 인덱스 |
 | 2 | [`postgis.sql`](../src/main/resources/db/postgis.sql) | `CREATE EXTENSION postgis` + bbox 검색용 GIST |
-| 3 | [`triggers.sql`](../src/main/resources/db/triggers.sql) | `schedule_restaurants` 삽입/삭제 시 `restaurants.schedule_add_count` 동기화 |
+
+기존 DB에 `schedule_add_count` 컬럼·관련 트리거가 남아 있다면 1회 [`drop-schedule-add-count-column.sql`](../src/main/resources/db/drop-schedule-add-count-column.sql) 을 선택 실행합니다.
 
 기존 DB에 레거시 `restaurants.location`(geometry 등) 컬럼만 남아 있다면 선택적으로 [`drop-restaurants-location-column.sql`](../src/main/resources/db/drop-restaurants-location-column.sql)을 실행합니다(앱과 SSOT DDL에는 해당 컬럼 없음).
 
@@ -21,7 +22,6 @@
 이전 파일명 호환:
 
 - [`dev-postgis.sql`](../src/main/resources/db/dev-postgis.sql) → `postgis.sql` 안내용
-- [`schedule-restaurant-trigger.sql`](../src/main/resources/db/schedule-restaurant-trigger.sql) → `triggers.sql` 안내용
 
 ## 2. 정규화·무결성 요약
 
@@ -46,21 +46,13 @@
 
 공간 인덱스는 **조건식과 동일한 표현식**(`ST_MakePoint(longitude, latitude, …)`)으로 만들어야 인덱스 스캔이 탑니다.
 
-## 4. 트리거와 비정규화
-
-`restaurants.schedule_add_count`는 집계를 빠르게 보여 주기 위한 **중복 저장(denormalization)** 입니다.
-
-- **AFTER INSERT / AFTER DELETE** on `schedule_restaurants` 에서 증감합니다.
-- 삭제 시 **`GREATEST(...-1, 0)`** 로 음수 방지.
-- PostgreSQL 11~13에서는 `triggers.sql` 안의 **`EXECUTE FUNCTION` 을 `EXECUTE PROCEDURE` 로 교체**해야 할 수 있습니다.
-
-## 5. 애플리케이션과의 관계
+## 4. 애플리케이션과의 관계
 
 - 기본 로컬 설정은 `spring.jpa.hibernate.ddl-auto: update` 로 **엔티티 기준 스키마를 자동 반영**합니다.
 - 과제·발표에서는 **`schema.sql`을 단일 진실 공급원(SSOT)** 으로 삼고, 수동 DDL 적용 후 **`spring.profiles.active=dbddl`** 로 `ddl-auto: validate` 만 사용할 수 있습니다 (`application-dbddl.yml`).
   - 수동 DDL과 Hibernate 생성 이름(FK 제약 이름 등)이 1글자라도 다르면 validate 가 실패할 수 있어, 보통은 **하나의 방식(update XOR 순수 DDL)** 을 고릅니다.
 
-## 6. OLAP 쿼리와 스키마 정합성
+## 5. OLAP 쿼리와 스키마 정합성
 
 추천·통계 네이티브 SQL은 **`schedule_restaurants` 조인 `schedules`** 를 전제로 합니다. 레거시 `schedules(user_id, restaurant_id, visit_date_time)` 한 줄 설계와는 호환되지 않습니다.
 

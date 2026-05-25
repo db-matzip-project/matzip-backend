@@ -19,11 +19,9 @@ public record RestaurantResponse(
         @Schema(description = "평점. 값이 없으면 0.0", example = "4.5")
         double rating,
         @Schema(description = "리뷰 수. 값이 없으면 0", example = "120")
-        int reviewCount,
-        int scheduleAddCount) {
+        int reviewCount) {
 
     public static RestaurantResponse from(Restaurant entity) {
-        int pick = valueOrZero(entity.getScheduleAddCount());
         return new RestaurantResponse(
                 entity.getId(),
                 entity.getApiId(),
@@ -36,8 +34,7 @@ public record RestaurantResponse(
                 valueOrZero(entity.getLatitude()),
                 valueOrZero(entity.getLongitude()),
                 valueOrZero(entity.getRating()),
-                valueOrZero(entity.getReviewCount()),
-                pick);
+                valueOrZero(entity.getReviewCount()));
     }
 
     private static double valueOrZero(Double value) {

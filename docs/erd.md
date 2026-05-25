@@ -48,7 +48,6 @@ erDiagram
         double longitude "공간 검색"
         double rating
         int review_count
-        int schedule_add_count "트리거 동기화"
     }
 
     schedules {
