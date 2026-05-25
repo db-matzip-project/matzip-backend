@@ -6,6 +6,7 @@
 -- 실행 순서 (수동 DDL 워크플로우):
 --   1) 본 파일 schema.sql
 --   2) postgis.sql (지도 bounds 검색용 GIST)
+--   3) triggers.sql (schedule_add_count 동기화)
 --
 -- 로컬 개발에서 Hibernate ddl-auto=update 만 쓸 경우 이 파일 생략 가능하나,
 -- DB 과제 제출·무결성 설명용으로 이 스크립트가 단일 기준(SSOT)입니다.
@@ -52,7 +53,7 @@ CREATE TABLE IF NOT EXISTS user_preferences (
 CREATE INDEX IF NOT EXISTS idx_user_preferences_pref ON user_preferences (preference_id);
 
 -- ---------------------------------------------------------------------------
--- restaurants : 장소 마스터
+-- restaurants : 장소 마스터 + 집계 컬럼 schedule_add_count
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS restaurants (
     id                   BIGSERIAL PRIMARY KEY,
@@ -67,11 +68,13 @@ CREATE TABLE IF NOT EXISTS restaurants (
     longitude            DOUBLE PRECISION,
     rating               DOUBLE PRECISION,
     review_count         INTEGER,
+    schedule_add_count   INTEGER NOT NULL DEFAULT 0,
     CONSTRAINT chk_restaurants_rating CHECK (rating IS NULL OR (rating >= 0 AND rating <= 5)),
     CONSTRAINT chk_restaurants_lat CHECK (latitude IS NULL OR (latitude BETWEEN -90 AND 90)),
     CONSTRAINT chk_restaurants_lon CHECK (longitude IS NULL OR (longitude BETWEEN -180 AND 180))
 );
 
+COMMENT ON COLUMN restaurants.schedule_add_count IS '일정에 담긴 횟수 denormalization; triggers.sql 로 동기화 권장';
 COMMENT ON COLUMN restaurants.api_id IS '카카오 등 외부 장소 고유 ID (중복 적재 방지)';
 
 CREATE INDEX IF NOT EXISTS idx_restaurants_category ON restaurants (category)

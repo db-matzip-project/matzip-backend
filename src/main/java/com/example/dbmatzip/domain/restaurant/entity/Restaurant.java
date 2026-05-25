@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
+import org.hibernate.annotations.ColumnDefault;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
@@ -52,4 +53,9 @@ public class Restaurant {
     private Double rating;
 
     private Integer reviewCount;
+
+    /** 기존 행이 있을 때 NOT NULL 추가 실패 방지: DB 기본값 0 */
+    @Column(name = "schedule_add_count", nullable = false)
+    @ColumnDefault("0")
+    private Integer scheduleAddCount = 0;
 }
