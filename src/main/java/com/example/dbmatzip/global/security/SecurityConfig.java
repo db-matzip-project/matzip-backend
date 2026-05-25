@@ -1,10 +1,12 @@
 package com.example.dbmatzip.global.security;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -22,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -50,13 +53,25 @@ public class SecurityConfig {
                                 .permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/v1/restaurants/**")
                                 .permitAll()
-                                .requestMatchers(HttpMethod.POST, "/api/v1/restaurants/from-place")
+                                .requestMatchers(
+                                        HttpMethod.POST,
+                                        "/api/v1/restaurants/from-place",
+                                        "/api/v1/restaurants/from-place/")
                                 .authenticated()
                                 .requestMatchers(HttpMethod.POST, "/api/v1/restaurants/import/kakao")
                                 .authenticated()
                                 .anyRequest()
                                 .authenticated())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
+                            String path = request.getRequestURI();
+                            String method = request.getMethod();
+                            String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+                            log.warn(
+                                    "[SECURITY] 401 entrypoint: method={}, path={}, hasAuthorizationHeader={}, message={}",
+                                    method,
+                                    path,
+                                    authHeader != null && !authHeader.isBlank(),
+                                    authException.getMessage());
                             response.setStatus(401);
                             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
                             response.setContentType(MediaType.APPLICATION_JSON_VALUE);

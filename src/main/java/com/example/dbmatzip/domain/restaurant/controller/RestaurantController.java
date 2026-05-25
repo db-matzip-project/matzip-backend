@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/restaurants")
 @RequiredArgsConstructor
+@Slf4j
 public class RestaurantController {
 
     private final RestaurantService restaurantService;
@@ -81,13 +83,22 @@ public class RestaurantController {
     }
 
     /** 로그인한 사용자가 카카오 장소 JSON으로 식당을 api_id 기준 upsert 할 때 사용합니다. JWT 필수. */
-    @PostMapping("/from-place")
+    @PostMapping({"/from-place", "/from-place/"})
     @ResponseStatus(HttpStatus.OK)
     @Operation(
             summary = "장소 정보로 식당 upsert",
             description =
                     "`schedules/.../items/from-place` 와 같은 `{ \"place\": { ... } }` 또는 장소 필드를 루트에 두는 형식 모두 허용. JWT 필수. 응답은 저장된 레스토랑입니다.")
     public RestaurantResponse upsertFromPlace(@RequestBody JsonNode body) {
+        Authentication authentication = org.springframework.security.core.context.SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+        log.info(
+                "[RESTAURANT] from-place controller entered: isAuthenticated={}, principalType={}",
+                authentication != null && authentication.isAuthenticated(),
+                authentication != null && authentication.getPrincipal() != null
+                        ? authentication.getPrincipal().getClass().getSimpleName()
+                        : "null");
         UpsertRestaurantFromPlacePayload payload = parseUpsertRestaurantFromPlacePayload(body);
         var violations = validator.validate(payload);
         if (!violations.isEmpty()) {
