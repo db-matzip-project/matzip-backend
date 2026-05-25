@@ -25,9 +25,9 @@ spring:
         # DB: CREATE EXTENSION IF NOT EXISTS postgis;
         # 공간 인덱스: src/main/resources/db/postgis.sql
 
-# 카카오 개발자 콘솔의 REST API 키 (커밋 금지 — 환경변수 권장)
+# 카카오 REST 키: OS 환경변수 또는 백엔드 .env(dotenv 로 JVM 프로퍼티 주입 후) → 둘 다 없으면 VITE 변수명도 동일 파일에 두면 참고
 kakao:
-  rest-api-key: ${KAKAO_REST_API_KEY:}
+  rest-api-key: ${KAKAO_REST_API_KEY:${VITE_KAKAO_REST_API_KEY:}}
 
 # JWT (운영에서는 JWT_SECRET 필수 — 최소 32바이트 이상 문자열)
 jwt:

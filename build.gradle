@@ -19,6 +19,8 @@ repositories {
 }
 
 dependencies {
+    // 로컬 .env → JVM 프로퍼티로 올림 (spring 은 자동 미지원); KAKAO_REST_API_KEY 등
+    implementation 'io.github.cdimascio:dotenv-java:3.0.2'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
